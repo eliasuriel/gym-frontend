@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
 import Layout from './components/Layout';
+import Membresias from './pages/Membresias';
 
 function App() {
   const [rol, setRol] = useState(localStorage.getItem('rol'));
@@ -24,6 +25,7 @@ function App() {
     switch (pagina) {
       case 'dashboard': return <Dashboard />;
       case 'usuarios': return <Usuarios />;
+      case 'membresias': return <Membresias />;
       default: return <Dashboard />;
     }
   };
