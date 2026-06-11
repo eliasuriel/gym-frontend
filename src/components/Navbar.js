@@ -1,6 +1,11 @@
-export default function Navbar({ onLogout }) {
+export default function Navbar({ onLogout, onNavigate, pagina }) {
     const rol = localStorage.getItem('rol');
     const correo = localStorage.getItem('correo');
+
+    const linkClass = (p) =>
+        `flex items-center gap-3 px-3 py-2 rounded-lg transition cursor-pointer ${
+            pagina === p ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white hover:bg-gray-700'
+        }`;
 
     return (
         <div className="bg-gray-800 w-64 min-h-screen flex flex-col p-4">
@@ -15,28 +20,28 @@ export default function Navbar({ onLogout }) {
             <nav className="flex-1 space-y-2">
                 {rol === 'ADMIN' && (
                     <>
-                        <a href="/dashboard" className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-lg transition">
+                        <div onClick={() => onNavigate('dashboard')} className={linkClass('dashboard')}>
                             📊 Dashboard
-                        </a>
-                        <a href="/usuarios" className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-lg transition">
+                        </div>
+                        <div onClick={() => onNavigate('usuarios')} className={linkClass('usuarios')}>
                             👥 Usuarios
-                        </a>
-                        <a href="/membresias" className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-lg transition">
+                        </div>
+                        <div onClick={() => onNavigate('membresias')} className={linkClass('membresias')}>
                             🎫 Membresías
-                        </a>
-                        <a href="/asistencias" className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-lg transition">
+                        </div>
+                        <div onClick={() => onNavigate('asistencias')} className={linkClass('asistencias')}>
                             ✅ Asistencias
-                        </a>
+                        </div>
                     </>
                 )}
                 {rol === 'CLIENTE' && (
                     <>
-                        <a href="/mi-membresia" className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-lg transition">
+                        <div onClick={() => onNavigate('mi-membresia')} className={linkClass('mi-membresia')}>
                             🎫 Mi Membresía
-                        </a>
-                        <a href="/mis-datos" className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-gray-700 px-3 py-2 rounded-lg transition">
+                        </div>
+                        <div onClick={() => onNavigate('mis-datos')} className={linkClass('mis-datos')}>
                             📏 Mis Datos
-                        </a>
+                        </div>
                     </>
                 )}
             </nav>
