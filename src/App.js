@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
 import Layout from './components/Layout';
 import Membresias from './pages/Membresias';
+import Asistencias from './pages/Asistencias';
 
 function App() {
   const [rol, setRol] = useState(localStorage.getItem('rol'));
@@ -26,6 +27,7 @@ function App() {
       case 'dashboard': return <Dashboard />;
       case 'usuarios': return <Usuarios />;
       case 'membresias': return <Membresias />;
+      case 'asistencias': return <Asistencias />;
       default: return <Dashboard />;
     }
   };
