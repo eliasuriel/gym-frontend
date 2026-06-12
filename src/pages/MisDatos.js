@@ -10,14 +10,11 @@ export default function MisDatos() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        const correo = localStorage.getItem('correo');
-        api.get('/usuarios').then(res => {
-            const yo = res.data.find(u => u.correo === correo);
-            if (yo) {
-                setUsuarioId(yo.id);
-                cargarDatos(yo.id);
-            }
-        });
+        const id = localStorage.getItem('usuarioId');
+        if (id) {
+            setUsuarioId(id);
+            cargarDatos(id);
+        }
     }, []);
 
     const cargarDatos = (id) => {
@@ -58,10 +55,8 @@ export default function MisDatos() {
     return (
         <div>
             <h2 className="text-3xl font-bold mb-8">Mis Datos Corporales</h2>
-
             {success && <div className="bg-green-600 text-white p-3 rounded-lg mb-4">{success}</div>}
             {error && <div className="bg-red-600 text-white p-3 rounded-lg mb-4">{error}</div>}
-
             {ultimo && (
                 <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                     <h3 className="text-xl font-semibold mb-4">Último registro</h3>
@@ -86,53 +81,37 @@ export default function MisDatos() {
                     </div>
                 </div>
             )}
-
             <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                 <h3 className="text-xl font-semibold mb-4">Registrar nuevos datos</h3>
                 <form onSubmit={handleGuardar} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Peso (kg)</label>
-                        <input
-                            type="number" step="0.1"
-                            value={form.peso}
-                            onChange={e => setForm({...form, peso: e.target.value})}
-                            className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="75.5"
-                            required
-                        />
+                        <input type="number" step="0.1" value={form.peso}
+                               onChange={e => setForm({...form, peso: e.target.value})}
+                               className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="75.5" required />
                     </div>
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Altura (m)</label>
-                        <input
-                            type="number" step="0.01"
-                            value={form.altura}
-                            onChange={e => setForm({...form, altura: e.target.value})}
-                            className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="1.75"
-                            required
-                        />
+                        <input type="number" step="0.01" value={form.altura}
+                               onChange={e => setForm({...form, altura: e.target.value})}
+                               className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="1.75" required />
                     </div>
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Cintura (cm) — opcional</label>
-                        <input
-                            type="number" step="0.1"
-                            value={form.cintura}
-                            onChange={e => setForm({...form, cintura: e.target.value})}
-                            className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="85.0"
-                        />
+                        <input type="number" step="0.1" value={form.cintura}
+                               onChange={e => setForm({...form, cintura: e.target.value})}
+                               className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                               placeholder="85.0" />
                     </div>
                     <div className="md:col-span-3">
-                        <button
-                            type="submit"
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition"
-                        >
+                        <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition">
                             Guardar datos
                         </button>
                     </div>
                 </form>
             </div>
-
             <div className="bg-gray-800 rounded-2xl p-6">
                 <h3 className="text-xl font-semibold mb-4">Historial</h3>
                 {historial.length === 0 ? (

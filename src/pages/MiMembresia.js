@@ -7,21 +7,17 @@ export default function MiMembresia() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const correo = localStorage.getItem('correo');
-        api.get('/usuarios')
-            .then(res => {
-                const yo = res.data.find(u => u.correo === correo);
-                if (yo) {
-                    Promise.allSettled([
-                        api.get(`/membresias/usuario/${yo.id}/activa`),
-                        api.get(`/membresias/usuario/${yo.id}/historial`)
-                    ]).then(([activaRes, historialRes]) => {
-                        setMembresiaActiva(activaRes.status === 'fulfilled' ? activaRes.value.data : null);
-                        setHistorial(historialRes.status === 'fulfilled' ? historialRes.value.data : []);
-                    });
-                }
-            })
-            .finally(() => setLoading(false));
+        const id = localStorage.getItem('usuarioId');
+        if (id) {
+            Promise.allSettled([
+                api.get(`/membresias/usuario/${id}/activa`),
+                api.get(`/membresias/usuario/${id}/historial`)
+            ]).then(([activaRes, historialRes]) => {
+                setMembresiaActiva(activaRes.status === 'fulfilled' ? activaRes.value.data : null);
+                setHistorial(historialRes.status === 'fulfilled' ? historialRes.value.data : []);
+            });
+        }
+        setLoading(false);
     }, []);
 
     const colorTipo = (tipo) => {
@@ -32,8 +28,7 @@ export default function MiMembresia() {
     const diasRestantes = (fechaVencimiento) => {
         const hoy = new Date();
         const vence = new Date(fechaVencimiento);
-        const diff = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24));
-        return diff;
+        return Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24));
     };
 
     if (loading) return <p className="text-gray-400">Cargando...</p>;
@@ -41,7 +36,6 @@ export default function MiMembresia() {
     return (
         <div>
             <h2 className="text-3xl font-bold mb-8">Mi Membresía</h2>
-
             {membresiaActiva ? (
                 <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                     <div className="flex items-center justify-between mb-6">
@@ -77,7 +71,6 @@ export default function MiMembresia() {
                     <p className="text-gray-500 text-sm mt-2">Contacta al administrador para renovar.</p>
                 </div>
             )}
-
             <div className="bg-gray-800 rounded-2xl p-6">
                 <h3 className="text-xl font-semibold mb-4">Historial</h3>
                 {historial.length === 0 ? (

@@ -16,6 +16,7 @@ export default function Login({ onLogin }) {
             localStorage.setItem('token', res.data.token);
             localStorage.setItem('rol', res.data.rol);
             localStorage.setItem('correo', res.data.correo);
+            localStorage.setItem('usuarioId', res.data.id);
             onLogin(res.data.rol);
         } catch (err) {
             setError('Correo o contraseña incorrectos');
