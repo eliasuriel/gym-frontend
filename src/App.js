@@ -2,17 +2,21 @@ import { useState } from 'react';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './pages/Usuarios';
-import Layout from './components/Layout';
 import Membresias from './pages/Membresias';
 import Asistencias from './pages/Asistencias';
+import MiMembresia from './pages/MiMembresia';
+import MisDatos from './pages/MisDatos';
+import Layout from './components/Layout';
 
 function App() {
   const [rol, setRol] = useState(localStorage.getItem('rol'));
-  const [pagina, setPagina] = useState('dashboard');
+  const [pagina, setPagina] = useState(
+      localStorage.getItem('rol') === 'CLIENTE' ? 'mi-membresia' : 'dashboard'
+  );
 
   const handleLogin = (rolUsuario) => {
     setRol(rolUsuario);
-    setPagina('dashboard');
+    setPagina(rolUsuario === 'CLIENTE' ? 'mi-membresia' : 'dashboard');
   };
 
   const handleLogout = () => {
@@ -28,7 +32,9 @@ function App() {
       case 'usuarios': return <Usuarios />;
       case 'membresias': return <Membresias />;
       case 'asistencias': return <Asistencias />;
-      default: return <Dashboard />;
+      case 'mi-membresia': return <MiMembresia />;
+      case 'mis-datos': return <MisDatos />;
+      default: return localStorage.getItem('rol') === 'CLIENTE' ? <MiMembresia /> : <Dashboard />;
     }
   };
 
