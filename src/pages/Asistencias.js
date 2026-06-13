@@ -7,8 +7,6 @@ export default function Asistencias() {
     const [historial, setHistorial] = useState([]);
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState('');
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState('');
-    const [error, setError] = useState('');
 
     useEffect(() => {
         api.get('/usuarios').then(res => setUsuarios(res.data));
@@ -30,67 +28,30 @@ export default function Asistencias() {
             .finally(() => setLoading(false));
     };
 
-    const handleEntrada = async (usuarioId) => {
-        setError('');
-        try {
-            await api.post(`/asistencias/entrada/${usuarioId}`);
-            setSuccess('Entrada registrada correctamente');
-            cargarAsistenciasHoy();
-            if (usuarioSeleccionado) cargarHistorial(usuarioSeleccionado);
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            setError(err.response?.data?.mensaje || 'Error al registrar entrada');
-        }
-    };
-
-    const handleSalida = async (usuarioId) => {
-        setError('');
-        try {
-            await api.put(`/asistencias/salida/${usuarioId}`);
-            setSuccess('Salida registrada correctamente');
-            cargarAsistenciasHoy();
-            if (usuarioSeleccionado) cargarHistorial(usuarioSeleccionado);
-            setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-            setError(err.response?.data?.mensaje || 'Error al registrar salida');
-        }
-    };
-
     const clientesSinSalida = asistenciasHoy.filter(a => !a.fechaSalida);
 
     return (
         <div>
             <h2 className="text-3xl font-bold mb-8">Asistencias</h2>
 
-            {success && <div className="bg-green-600 text-white p-3 rounded-lg mb-4">{success}</div>}
-            {error && <div className="bg-red-600 text-white p-3 rounded-lg mb-4">{error}</div>}
-
-            {/* Registro rápido */}
+            {/* Resumen del día */}
             <div className="bg-gray-800 rounded-2xl p-6 mb-6">
-                <h3 className="text-xl font-semibold mb-4">Registro rápido</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {usuarios.filter(u => u.rol === 'CLIENTE').map(u => (
-                        <div key={u.id} className="bg-gray-700 rounded-xl p-4 flex items-center justify-between">
-                            <div>
-                                <p className="text-white font-medium">{u.nombre}</p>
-                                <p className="text-gray-400 text-xs">{u.correo}</p>
-                            </div>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => handleEntrada(u.id)}
-                                    className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1 rounded-lg transition"
-                                >
-                                    Entrada
-                                </button>
-                                <button
-                                    onClick={() => handleSalida(u.id)}
-                                    className="bg-orange-600 hover:bg-orange-700 text-white text-xs px-3 py-1 rounded-lg transition"
-                                >
-                                    Salida
-                                </button>
-                            </div>
+                <div className="flex items-center justify-between">
+                    <h3 className="text-xl font-semibold">Resumen de hoy</h3>
+                    <div className="flex gap-6">
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-blue-400">{asistenciasHoy.length}</p>
+                            <p className="text-gray-400 text-xs">Total entradas</p>
                         </div>
-                    ))}
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-green-400">{clientesSinSalida.length}</p>
+                            <p className="text-gray-400 text-xs">En gimnasio ahora</p>
+                        </div>
+                        <div className="text-center">
+                            <p className="text-2xl font-bold text-gray-400">{asistenciasHoy.length - clientesSinSalida.length}</p>
+                            <p className="text-gray-400 text-xs">Ya salieron</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -98,9 +59,12 @@ export default function Asistencias() {
             <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-semibold">Asistencias de hoy</h3>
-                    <span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
-            {asistenciasHoy.length} registros
-          </span>
+                    <button
+                        onClick={cargarAsistenciasHoy}
+                        className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded-lg transition"
+                    >
+                        🔄 Actualizar
+                    </button>
                 </div>
                 {asistenciasHoy.length === 0 ? (
                     <p className="text-gray-400">No hay asistencias registradas hoy.</p>
@@ -117,7 +81,7 @@ export default function Asistencias() {
                         <tbody>
                         {asistenciasHoy.map(a => (
                             <tr key={a.id} className="border-b border-gray-700 hover:bg-gray-700 transition">
-                                <td className="py-3">{a.usuario.nombre}</td>
+                                <td className="py-3 font-medium">{a.usuario.nombre}</td>
                                 <td className="py-3 text-gray-400">{a.fechaEntrada}</td>
                                 <td className="py-3 text-gray-400">{a.fechaSalida || '—'}</td>
                                 <td className="py-3">

@@ -39,6 +39,9 @@ export default function Navbar({ onLogout, onNavigate, pagina }) {
                         <div onClick={() => onNavigate('mi-membresia')} className={linkClass('mi-membresia')}>
                             🎫 Mi Membresía
                         </div>
+                        <div onClick={() => onNavigate('mis-asistencias')} className={linkClass('mis-asistencias')}>
+                            ✅ Mis Asistencias
+                        </div>
                         <div onClick={() => onNavigate('mis-datos')} className={linkClass('mis-datos')}>
                             📏 Mis Datos
                         </div>
