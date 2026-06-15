@@ -32,6 +32,9 @@ export default function Navbar({ onLogout, onNavigate, pagina }) {
                         <div onClick={() => onNavigate('asistencias')} className={linkClass('asistencias')}>
                             ✅ Asistencias
                         </div>
+                        <div onClick={() => onNavigate('datos-cuerpo')} className={linkClass('datos-cuerpo')}>
+                            📏 Datos Corporales
+                        </div>
                     </>
                 )}
                 {rol === 'CLIENTE' && (
