@@ -78,6 +78,17 @@ export default function DatosCuerpoAdmin() {
         return 'text-red-400';
     };
 
+    const diff = (actual, anterior) => {
+        if (actual == null || anterior == null) return null;
+        const d = parseFloat((actual - anterior).toFixed(1));
+        const positivo = d > 0;
+        return (
+            <span className={`text-xs font-medium ml-1 ${positivo ? 'text-red-400' : 'text-green-400'}`}>
+        {positivo ? `↑ +${d}` : `↓ ${d}`}
+      </span>
+        );
+    };
+
     const campo = (label, key, placeholder, unidad) => (
         <div>
             <label className="text-gray-400 text-sm block mb-1">
@@ -92,6 +103,8 @@ export default function DatosCuerpoAdmin() {
             />
         </div>
     );
+
+    const anterior = historial.length > 1 ? historial[1] : null;
 
     return (
         <div>
@@ -134,7 +147,6 @@ export default function DatosCuerpoAdmin() {
                 <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                     <h3 className="text-xl font-semibold mb-6">Nuevo registro</h3>
                     <form onSubmit={handleGuardar}>
-
                         <p className="text-blue-400 font-medium mb-3">📊 Composición corporal</p>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                             {campo('Peso', 'peso', '75.5', 'kg')}
@@ -177,30 +189,40 @@ export default function DatosCuerpoAdmin() {
                 </div>
             )}
 
-            {/* Último registro */}
+            {/* Último registro con diferencias */}
             {ultimo && (
                 <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xl font-semibold">Último registro</h3>
-                        <span className="text-gray-400 text-sm">{ultimo.fechaRegistro}</span>
+                        <div className="text-right">
+                            <span className="text-gray-400 text-sm">{ultimo.fechaRegistro}</span>
+                            {anterior && (
+                                <p className="text-gray-500 text-xs mt-1">
+                                    vs anterior: {anterior.fechaRegistro}
+                                </p>
+                            )}
+                        </div>
                     </div>
 
                     <p className="text-blue-400 font-medium mb-3">📊 Composición corporal</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                         {[
-                            { label: 'Peso', valor: ultimo.peso, unidad: 'kg' },
-                            { label: 'IMC', valor: ultimo.imc, unidad: ultimo.categoria, color: colorImc(ultimo.imc) },
-                            { label: 'Músculo', valor: ultimo.musculo, unidad: 'kg' },
-                            { label: 'Grasa corporal', valor: ultimo.grasaCorporal, unidad: '%' },
-                            { label: 'Grasa visceral', valor: ultimo.grasaVisceral, unidad: 'nivel' },
-                            { label: 'Edad metabólica', valor: ultimo.edadMetabolica, unidad: 'años' },
-                        ].map(({ label, valor, unidad, color }) => (
+                            { label: 'Peso', key: 'peso', unidad: 'kg' },
+                            { label: 'IMC', key: 'imc', unidad: ultimo.categoria, color: colorImc(ultimo.imc) },
+                            { label: 'Músculo', key: 'musculo', unidad: 'kg' },
+                            { label: 'Grasa corporal', key: 'grasaCorporal', unidad: '%' },
+                            { label: 'Grasa visceral', key: 'grasaVisceral', unidad: 'nivel' },
+                            { label: 'Edad metabólica', key: 'edadMetabolica', unidad: 'años' },
+                        ].map(({ label, key, unidad, color }) => (
                             <div key={label} className="bg-gray-700 rounded-xl p-4">
                                 <p className="text-gray-400 text-sm mb-1">{label}</p>
-                                <p className={`text-2xl font-bold ${color || 'text-white'}`}>
-                                    {valor ?? '—'}
-                                </p>
-                                <p className="text-gray-500 text-xs">{unidad}</p>
+                                <div className="flex items-baseline flex-wrap gap-1">
+                                    <p className={`text-2xl font-bold ${color || 'text-white'}`}>
+                                        {ultimo[key] ?? '—'}
+                                    </p>
+                                    <p className="text-gray-500 text-xs">{unidad}</p>
+                                    {anterior && diff(ultimo[key], anterior[key])}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -208,17 +230,20 @@ export default function DatosCuerpoAdmin() {
                     <p className="text-purple-400 font-medium mb-3">📏 Medidas corporales</p>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {[
-                            { label: 'Busto', valor: ultimo.busto },
-                            { label: 'Cintura', valor: ultimo.cintura },
-                            { label: 'Abdomen', valor: ultimo.abdomen },
-                            { label: 'Cadera', valor: ultimo.cadera },
-                            { label: 'Muslo', valor: ultimo.muslo },
-                            { label: 'Brazo', valor: ultimo.brazo },
-                        ].map(({ label, valor }) => (
+                            { label: 'Busto', key: 'busto' },
+                            { label: 'Cintura', key: 'cintura' },
+                            { label: 'Abdomen', key: 'abdomen' },
+                            { label: 'Cadera', key: 'cadera' },
+                            { label: 'Muslo', key: 'muslo' },
+                            { label: 'Brazo', key: 'brazo' },
+                        ].map(({ label, key }) => (
                             <div key={label} className="bg-gray-700 rounded-xl p-4">
                                 <p className="text-gray-400 text-sm mb-1">{label}</p>
-                                <p className="text-2xl font-bold text-white">{valor ?? '—'}</p>
-                                <p className="text-gray-500 text-xs">cm</p>
+                                <div className="flex items-baseline flex-wrap gap-1">
+                                    <p className="text-2xl font-bold text-white">{ultimo[key] ?? '—'}</p>
+                                    <p className="text-gray-500 text-xs">cm</p>
+                                    {anterior && diff(ultimo[key], anterior[key])}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -243,17 +268,38 @@ export default function DatosCuerpoAdmin() {
                             </tr>
                             </thead>
                             <tbody>
-                            {historial.map(d => (
-                                <tr key={d.id} className="border-b border-gray-700 hover:bg-gray-700 transition">
-                                    <td className="py-3 pr-4 text-gray-400">{d.fechaRegistro}</td>
-                                    <td className="py-3 pr-4">{d.peso ?? '—'} kg</td>
-                                    <td className={`py-3 pr-4 font-semibold ${colorImc(d.imc)}`}>{d.imc ?? '—'}</td>
-                                    <td className="py-3 pr-4">{d.musculo ?? '—'} kg</td>
-                                    <td className="py-3 pr-4">{d.grasaCorporal ?? '—'} %</td>
-                                    <td className="py-3 pr-4">{d.cintura ?? '—'} cm</td>
-                                    <td className="py-3 pr-4">{d.cadera ?? '—'} cm</td>
-                                </tr>
-                            ))}
+                            {historial.map((d, i) => {
+                                const prev = historial[i + 1] || null;
+                                return (
+                                    <tr key={d.id} className="border-b border-gray-700 hover:bg-gray-700 transition">
+                                        <td className="py-3 pr-4 text-gray-400">{d.fechaRegistro}</td>
+                                        <td className="py-3 pr-4">
+                                            {d.peso ?? '—'} kg
+                                            {prev && diff(d.peso, prev.peso)}
+                                        </td>
+                                        <td className={`py-3 pr-4 font-semibold ${colorImc(d.imc)}`}>
+                                            {d.imc ?? '—'}
+                                            {prev && diff(d.imc, prev.imc)}
+                                        </td>
+                                        <td className="py-3 pr-4">
+                                            {d.musculo ?? '—'} kg
+                                            {prev && diff(d.musculo, prev.musculo)}
+                                        </td>
+                                        <td className="py-3 pr-4">
+                                            {d.grasaCorporal ?? '—'} %
+                                            {prev && diff(d.grasaCorporal, prev.grasaCorporal)}
+                                        </td>
+                                        <td className="py-3 pr-4">
+                                            {d.cintura ?? '—'} cm
+                                            {prev && diff(d.cintura, prev.cintura)}
+                                        </td>
+                                        <td className="py-3 pr-4">
+                                            {d.cadera ?? '—'} cm
+                                            {prev && diff(d.cadera, prev.cadera)}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             </tbody>
                         </table>
                     </div>
