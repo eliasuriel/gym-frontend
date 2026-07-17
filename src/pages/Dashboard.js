@@ -8,41 +8,43 @@ export default function Dashboard() {
     useEffect(() => {
         api.get('/usuarios')
             .then(res => setUsuarios(res.data))
-            .catch(err => console.error(err))
             .finally(() => setLoading(false));
     }, []);
 
     const totalClientes = usuarios.filter(u => u.rol === 'CLIENTE').length;
     const totalAdmins = usuarios.filter(u => u.rol === 'ADMIN').length;
 
+    const cardStyle = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(192,132,252,0.15)' };
+
     return (
         <div>
-            <h2 className="text-3xl font-bold mb-8">Dashboard</h2>
+            <h2 className="text-3xl font-bold mb-2 text-white">Dashboard</h2>
+            <p className="mb-8" style={{ color: '#9ca3af' }}>Bienvenida, administradora</p>
 
             {loading ? (
-                <p className="text-gray-400">Cargando...</p>
+                <p style={{ color: '#9ca3af' }}>Cargando...</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-gray-800 rounded-2xl p-6">
-                        <p className="text-gray-400 text-sm">Total usuarios</p>
-                        <p className="text-4xl font-bold text-white mt-2">{usuarios.length}</p>
+                    <div className="rounded-2xl p-6" style={cardStyle}>
+                        <p className="text-sm mb-2" style={{ color: '#9ca3af' }}>Total usuarios</p>
+                        <p className="text-4xl font-bold text-white">{usuarios.length}</p>
                     </div>
-                    <div className="bg-gray-800 rounded-2xl p-6">
-                        <p className="text-gray-400 text-sm">Clientes</p>
-                        <p className="text-4xl font-bold text-blue-400 mt-2">{totalClientes}</p>
+                    <div className="rounded-2xl p-6" style={cardStyle}>
+                        <p className="text-sm mb-2" style={{ color: '#9ca3af' }}>Clientas</p>
+                        <p className="text-4xl font-bold" style={{ color: '#c084fc' }}>{totalClientes}</p>
                     </div>
-                    <div className="bg-gray-800 rounded-2xl p-6">
-                        <p className="text-gray-400 text-sm">Administradores</p>
-                        <p className="text-4xl font-bold text-green-400 mt-2">{totalAdmins}</p>
+                    <div className="rounded-2xl p-6" style={cardStyle}>
+                        <p className="text-sm mb-2" style={{ color: '#9ca3af' }}>Administradoras</p>
+                        <p className="text-4xl font-bold" style={{ color: '#f472b6' }}>{totalAdmins}</p>
                     </div>
                 </div>
             )}
 
-            <div className="bg-gray-800 rounded-2xl p-6">
-                <h3 className="text-xl font-semibold mb-4">Usuarios registrados</h3>
+            <div className="rounded-2xl p-6" style={cardStyle}>
+                <h3 className="text-xl font-semibold mb-4 text-white">Usuarias registradas</h3>
                 <table className="w-full text-sm">
                     <thead>
-                    <tr className="text-gray-400 border-b border-gray-700">
+                    <tr style={{ color: '#9ca3af', borderBottom: '1px solid rgba(192,132,252,0.15)' }}>
                         <th className="text-left py-2">Nombre</th>
                         <th className="text-left py-2">Correo</th>
                         <th className="text-left py-2">Rol</th>
@@ -50,11 +52,15 @@ export default function Dashboard() {
                     </thead>
                     <tbody>
                     {usuarios.map(u => (
-                        <tr key={u.id} className="border-b border-gray-700 hover:bg-gray-700 transition">
-                            <td className="py-3">{u.nombre}</td>
-                            <td className="py-3 text-gray-400">{u.correo}</td>
+                        <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                            className="hover:bg-white hover:bg-opacity-5 transition">
+                            <td className="py-3 text-white">{u.nombre}</td>
+                            <td className="py-3" style={{ color: '#9ca3af' }}>{u.correo}</td>
                             <td className="py-3">
-                  <span className={`px-2 py-1 rounded-full text-xs ${u.rol === 'ADMIN' ? 'bg-green-600' : 'bg-blue-600'}`}>
+                  <span className="px-3 py-1 rounded-full text-xs font-semibold"
+                        style={u.rol === 'ADMIN'
+                            ? { background: 'rgba(244,114,182,0.2)', color: '#f472b6' }
+                            : { background: 'rgba(192,132,252,0.2)', color: '#c084fc' }}>
                     {u.rol}
                   </span>
                             </td>

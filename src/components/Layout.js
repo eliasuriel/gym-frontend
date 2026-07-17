@@ -2,7 +2,7 @@ import Navbar from './Navbar';
 
 export default function Layout({ children, onLogout, onNavigate, pagina }) {
     return (
-        <div className="flex min-h-screen bg-gray-900">
+        <div className="flex min-h-screen" style={{ background: '#0a0a12' }}>
             <Navbar onLogout={onLogout} onNavigate={onNavigate} pagina={pagina} />
             <main className="flex-1 p-8 text-white overflow-auto">
                 {children}
