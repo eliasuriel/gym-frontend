@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 
+const API_BASE = 'http://localhost:8080';
+
 export default function BienvenidaCliente({ onVolver }) {
     const [segundos, setSegundos] = useState(30);
     const correo = localStorage.getItem('correo');
     const membresia = JSON.parse(localStorage.getItem('membresiaActiva') || 'null');
+    const foto = localStorage.getItem('fotoUsuario');
 
     useEffect(() => {
         const intervalo = setInterval(() => {
@@ -40,11 +43,24 @@ export default function BienvenidaCliente({ onVolver }) {
           </span>
                 </div>
 
-                {/* Icono y bienvenida */}
-                <div className="w-28 h-28 rounded-full flex items-center justify-center text-6xl mx-auto mb-6"
-                     style={{ background: 'linear-gradient(135deg, #9333ea, #f472b6)' }}>
-                    💪
-                </div>
+                {/* Foto o emoji */}
+                {foto ? (
+                    <img
+                        src={`${API_BASE}/api/fotos/${foto}`}
+                        alt="foto cliente"
+                        className="w-28 h-28 rounded-full object-cover mx-auto mb-6"
+                        style={{
+                            border: '4px solid rgba(192,132,252,0.6)',
+                            boxShadow: '0 0 30px rgba(147,51,234,0.4)'
+                        }}
+                    />
+                ) : (
+                    <div className="w-28 h-28 rounded-full flex items-center justify-center text-6xl mx-auto mb-6"
+                         style={{ background: 'linear-gradient(135deg, #9333ea, #f472b6)' }}>
+                        💪
+                    </div>
+                )}
+
                 <h2 className="text-5xl font-bold text-white mb-3">¡Bienvenida!</h2>
                 <p className="text-2xl mb-10" style={{ color: '#c084fc' }}>{correo}</p>
 
@@ -81,7 +97,8 @@ export default function BienvenidaCliente({ onVolver }) {
 
                         <div className="rounded-xl p-6" style={{ background: 'rgba(255,255,255,0.05)' }}>
                             <p className="text-lg mb-2" style={{ color: '#9ca3af' }}>Días restantes</p>
-                            <p className="text-7xl font-bold" style={{ color: dias <= 7 && dias > 0 ? '#fb923c' : dias <= 0 ? '#ef4444' : '#a855f7' }}>
+                            <p className="text-7xl font-bold"
+                               style={{ color: dias <= 7 && dias > 0 ? '#fb923c' : dias <= 0 ? '#ef4444' : '#a855f7' }}>
                                 {dias}
                             </p>
                             <p className="text-lg mt-2" style={{ color: '#6b7280' }}>días</p>

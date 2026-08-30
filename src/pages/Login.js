@@ -13,6 +13,7 @@ export default function Login({ onLogin }) {
     const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const API_BASE = 'http://localhost:8080';
 
     const handleLoginAdmin = async (e) => {
         e.preventDefault();
@@ -70,6 +71,7 @@ export default function Login({ onLogin }) {
 
             localStorage.setItem('membresiaActiva', JSON.stringify(membresiaData));
             localStorage.setItem('correo', usuarioEncontrado.correo);
+            localStorage.setItem('fotoUsuario' , usuarioEncontrado.foto || '');
 
             try {
                 await api.post(`/asistencias/entrada/${id}`, {}, {
@@ -264,12 +266,22 @@ export default function Login({ onLogin }) {
 
                             <div className="rounded-2xl p-6 mb-6 flex items-center gap-4"
                                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(192, 132, 252, 0.3)' }}>
-                                <div
-                                    className="w-16 h-16 rounded-full flex items-center justify-center text-3xl font-black text-white flex-shrink-0"
-                                    style={{ background: 'linear-gradient(135deg, #9333ea, #f472b6)' }}
-                                >
-                                    {inicial(usuarioEncontrado.correo)}
-                                </div>
+                                {/* Foto o inicial */}
+                                {usuarioEncontrado.foto ? (
+                                    <img
+                                        src={`${API_BASE}/api/fotos/${usuarioEncontrado.foto}`}
+                                        alt={usuarioEncontrado.correo}
+                                        className="w-20 h-20 rounded-full object-cover flex-shrink-0"
+                                        style={{ border: '3px solid rgba(192,132,252,0.6)' }}
+                                    />
+                                ) : (
+                                    <div
+                                        className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-black text-white flex-shrink-0"
+                                        style={{ background: 'linear-gradient(135deg, #9333ea, #f472b6)' }}
+                                    >
+                                        {inicial(usuarioEncontrado.correo)}
+                                    </div>
+                                )}
                                 <div>
                                     <p className="text-white font-bold text-lg">{usuarioEncontrado.correo}</p>
                                     <p className="text-gray-500 text-sm">ID: {usuarioEncontrado.id}</p>
