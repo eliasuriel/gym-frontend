@@ -55,6 +55,7 @@ export default function Login({ onLogin }) {
             const id = usuarioEncontrado.id;
             const token = tokenTemporal;
 
+            // Verificar membresía activa
             let membresiaData = null;
             try {
                 const membresiaRes = await api.get(`/membresias/usuario/${id}/activa`, {
@@ -69,15 +70,27 @@ export default function Login({ onLogin }) {
                 return;
             }
 
-            localStorage.setItem('membresiaActiva', JSON.stringify(membresiaData));
-            localStorage.setItem('correo', usuarioEncontrado.correo);
-            localStorage.setItem('fotoUsuario' , usuarioEncontrado.foto || '');
-
+            // Registrar entrada
             try {
                 await api.post(`/asistencias/entrada/${id}`, {}, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
             } catch {}
+
+            // Cargar historial de asistencias del mes
+            let asistencias = [];
+            try {
+                const asistenciasRes = await api.get(`/asistencias/usuario/${id}/historial`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                asistencias = asistenciasRes.data;
+            } catch {}
+
+            // store in local storage
+            localStorage.setItem('membresiaActiva', JSON.stringify(membresiaData));
+            localStorage.setItem('correo', usuarioEncontrado.correo);
+            localStorage.setItem('fotoUsuario', usuarioEncontrado.foto || '');
+            localStorage.setItem('asistenciasMes', JSON.stringify(asistencias));
 
             setMostrarBienvenida(true);
         } finally {
@@ -100,6 +113,7 @@ export default function Login({ onLogin }) {
         setError('');
         localStorage.removeItem('membresiaActiva');
         localStorage.removeItem('correo');
+        localStorage.removeItem('asistenciasMes');
     };
 
     const inicial = (correo) => correo ? correo.charAt(0).toUpperCase() : '?';
