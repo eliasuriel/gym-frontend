@@ -7,6 +7,7 @@ export default function Membresias() {
     const [historial, setHistorial] = useState([]);
     const [membresiaActiva, setMembresiaActiva] = useState(null);
     const [tipo, setTipo] = useState('MENSUAL');
+    const [precio, setPrecio] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
@@ -33,8 +34,13 @@ export default function Membresias() {
     const handleCrear = async () => {
         if (!usuarioSeleccionado) return;
         setError('');
+        if (!precio || Number(precio) <= 0) {
+            setError('Escribe el precio cobrado (mayor a 0)');
+            return;
+        }
         try {
-            await api.post(`/membresias/usuario/${usuarioSeleccionado}`, { tipo });
+            await api.post(`/membresias/usuario/${usuarioSeleccionado}`, { tipo, precio: Number(precio) });
+            setPrecio('');
             setSuccess('Membresía creada correctamente');
             cargarMembresias(usuarioSeleccionado);
             setTimeout(() => setSuccess(''), 3000);
@@ -42,6 +48,11 @@ export default function Membresias() {
             setError(err.response?.data?.mensaje || 'Error al crear membresía');
         }
     };
+
+    const formatoPrecio = (valor) =>
+        valor == null ? '—' : `$${Number(valor).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const totalPagado = historial.reduce((suma, m) => suma + (m.precio ? Number(m.precio) : 0), 0);
 
     const colorTipo = (tipo) => {
         const colores = {
@@ -62,7 +73,7 @@ export default function Membresias() {
 
             <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                 <h3 className="text-xl font-semibold mb-4">Gestionar membresía</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Seleccionar usuario</label>
                         <select
@@ -89,6 +100,18 @@ export default function Membresias() {
                             <option value="ANUAL">Anual</option>
                         </select>
                     </div>
+                    <div>
+                        <label className="text-gray-400 text-sm block mb-1">Precio cobrado ($)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={precio}
+                            onChange={e => setPrecio(e.target.value)}
+                            placeholder="Ej. 500"
+                            className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
                     <div className="flex items-end">
                         <button
                             onClick={handleCrear}
@@ -106,7 +129,7 @@ export default function Membresias() {
                     {membresiaActiva && (
                         <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                             <h3 className="text-xl font-semibold mb-4">Membresía activa</h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                                 <div>
                                     <p className="text-gray-400 text-sm">Tipo</p>
                                     <span className={`${colorTipo(membresiaActiva.tipo)} text-white text-sm px-3 py-1 rounded-full inline-block mt-1`}>
@@ -120,6 +143,10 @@ export default function Membresias() {
                                 <div>
                                     <p className="text-gray-400 text-sm">Vencimiento</p>
                                     <p className="text-white mt-1">{membresiaActiva.fechaVencimiento}</p>
+                                </div>
+                                <div>
+                                    <p className="text-gray-400 text-sm">Precio pagado</p>
+                                    <p className="text-white mt-1">{formatoPrecio(membresiaActiva.precio)}</p>
                                 </div>
                                 <div>
                                     <p className="text-gray-400 text-sm">Estado</p>
@@ -144,6 +171,7 @@ export default function Membresias() {
                                     <th className="text-left py-2">Tipo</th>
                                     <th className="text-left py-2">Fecha pago</th>
                                     <th className="text-left py-2">Vencimiento</th>
+                                    <th className="text-left py-2">Precio</th>
                                     <th className="text-left py-2">Estado</th>
                                 </tr>
                                 </thead>
@@ -157,6 +185,7 @@ export default function Membresias() {
                                         </td>
                                         <td className="py-3 text-gray-400">{m.fechaPago}</td>
                                         <td className="py-3 text-gray-400">{m.fechaVencimiento}</td>
+                                        <td className="py-3 text-white">{formatoPrecio(m.precio)}</td>
                                         <td className="py-3">
                         <span className={`text-xs px-2 py-1 rounded-full ${m.activa ? 'bg-green-600' : 'bg-gray-600'}`}>
                           {m.activa ? 'Activa' : 'Vencida'}
@@ -165,6 +194,12 @@ export default function Membresias() {
                                     </tr>
                                 ))}
                                 </tbody>
+                                <tfoot>
+                                <tr className="border-t border-gray-600">
+                                    <td colSpan="3" className="py-3 text-gray-400 text-right pr-4">Total pagado</td>
+                                    <td colSpan="2" className="py-3 text-white font-bold">{formatoPrecio(totalPagado)}</td>
+                                </tr>
+                                </tfoot>
                             </table>
                         )}
                     </div>

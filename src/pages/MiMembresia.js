@@ -25,6 +25,9 @@ export default function MiMembresia() {
         return colores[tipo] || 'bg-gray-600';
     };
 
+    const formatoPrecio = (valor) =>
+        valor == null ? '—' : `$${Number(valor).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
     const diasRestantes = (fechaVencimiento) => {
         const hoy = new Date();
         const vence = new Date(fechaVencimiento);
@@ -82,6 +85,7 @@ export default function MiMembresia() {
                             <th className="text-left py-2">Tipo</th>
                             <th className="text-left py-2">Fecha pago</th>
                             <th className="text-left py-2">Vencimiento</th>
+                            <th className="text-left py-2">Precio</th>
                             <th className="text-left py-2">Estado</th>
                         </tr>
                         </thead>
@@ -93,6 +97,7 @@ export default function MiMembresia() {
                                 </td>
                                 <td className="py-3 text-gray-400">{m.fechaPago}</td>
                                 <td className="py-3 text-gray-400">{m.fechaVencimiento}</td>
+                                <td className="py-3 text-white">{formatoPrecio(m.precio)}</td>
                                 <td className="py-3">
                     <span className={`text-xs px-2 py-1 rounded-full ${m.activa ? 'bg-green-600' : 'bg-gray-600'}`}>
                       {m.activa ? 'Activa' : 'Vencida'}

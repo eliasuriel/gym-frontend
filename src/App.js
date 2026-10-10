@@ -10,6 +10,7 @@ import Layout from './components/Layout';
 import MisAsistencias from './pages/MisAsistencias';
 import DatosCuerpoAdmin from './pages/DatosCuerpoAdmin';
 import ReporteMensual from './pages/ReporteMensual';
+import ReporteInasistencia from './pages/ReporteInasistencia';
 
 function App() {
   const [rol, setRol] = useState(localStorage.getItem('rol'));
@@ -40,6 +41,7 @@ function App() {
       case 'mis-asistencias': return <MisAsistencias />;
       case 'datos-cuerpo': return <DatosCuerpoAdmin />;
       case 'reporte': return <ReporteMensual />;
+      case 'reporte-inasistencia': return <ReporteInasistencia />;
       default: return localStorage.getItem('rol') === 'CLIENTE' ? <MiMembresia /> : <Dashboard />;
     }
   };

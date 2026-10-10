@@ -61,6 +61,9 @@ export default function Navbar({ onLogout, onNavigate, pagina }) {
                         <div onClick={() => onNavigate('reporte')} className={linkClass('reporte')} style={linkStyle('reporte')}>
                             📈 Reporte mensual
                         </div>
+                        <div onClick={() => onNavigate('reporte-inasistencia')} className={linkClass('reporte-inasistencia')} style={linkStyle('reporte-inasistencia')}>
+                            🚫 Sin asistir
+                        </div>
                     </>
                 )}
                 {rol === 'CLIENTE' && (

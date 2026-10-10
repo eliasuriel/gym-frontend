@@ -8,7 +8,7 @@ export default function Usuarios() {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({ nombre: '', correo: '', password: '', telefono: '', rol: 'CLIENTE' });
+    const [form, setForm] = useState({ id: '', nombre: '', correo: '', password: '', telefono: '', rol: 'CLIENTE' });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [subiendoFoto, setSubiendoFoto] = useState(null);
@@ -26,9 +26,9 @@ export default function Usuarios() {
         e.preventDefault();
         setError('');
         try {
-            await api.post('/usuarios', form);
+            await api.post('/usuarios', { ...form, id: form.id ? Number(form.id) : null });
             setSuccess('Usuario creado correctamente');
-            setForm({ nombre: '', correo: '', password: '', telefono: '', rol: 'CLIENTE' });
+            setForm({ id: '', nombre: '', correo: '', password: '', telefono: '', rol: 'CLIENTE' });
             setShowForm(false);
             cargarUsuarios();
             setTimeout(() => setSuccess(''), 3000);
@@ -142,6 +142,7 @@ export default function Usuarios() {
                     <h3 className="text-xl font-semibold mb-4 text-white">Nueva clienta</h3>
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {[
+                            { label: 'ID', key: 'id', type: 'number', placeholder: 'Ej. 1001 (vacío = automático)' },
                             { label: 'Nombre', key: 'nombre', type: 'text', placeholder: 'Nombre completo' },
                             { label: 'Correo', key: 'correo', type: 'email', placeholder: 'correo@ejemplo.com' },
                             { label: 'Contraseña', key: 'password', type: 'password', placeholder: '••••••••' },
@@ -156,7 +157,7 @@ export default function Usuarios() {
                                     placeholder={placeholder}
                                     className="w-full text-white px-4 py-2 rounded-xl focus:outline-none"
                                     style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(192,132,252,0.2)' }}
-                                    required={key !== 'telefono'}
+                                    required={key !== 'telefono' && key !== 'id'}
                                 />
                             </div>
                         ))}
@@ -191,6 +192,7 @@ export default function Usuarios() {
                     <thead>
                     <tr style={{ color: '#9ca3af', borderBottom: '1px solid rgba(192,132,252,0.15)' }}>
                         <th className="text-left py-3">Foto</th>
+                        <th className="text-left py-3">ID</th>
                         <th className="text-left py-3">Nombre</th>
                         <th className="text-left py-3">Correo</th>
                         <th className="text-left py-3">Teléfono</th>
@@ -201,7 +203,7 @@ export default function Usuarios() {
                     <tbody>
                     {loading ? (
                         <tr>
-                            <td colSpan="6" className="py-8 text-center" style={{ color: '#9ca3af' }}>
+                            <td colSpan="7" className="py-8 text-center" style={{ color: '#9ca3af' }}>
                                 Cargando...
                             </td>
                         </tr>
@@ -239,6 +241,7 @@ export default function Usuarios() {
                                 </div>
                             </td>
 
+                            <td className="py-3 font-mono" style={{ color: '#c084fc' }}>{u.id}</td>
                             <td className="py-3 text-white font-medium">{u.nombre}</td>
                             <td className="py-3" style={{ color: '#9ca3af' }}>{u.correo}</td>
                             <td className="py-3" style={{ color: '#9ca3af' }}>{u.telefono || '—'}</td>
