@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react';
+import { calcularEdad, esCumpleHoy } from '../utils/fechas';
 
 const API_BASE = `http://${window.location.hostname}:8080`;
-//const API_BASE = 'http://localhost:8080';
 
 export default function BienvenidaCliente({ onVolver }) {
     const [segundos, setSegundos] = useState(30);
     const correo = localStorage.getItem('correo');
     const membresia = JSON.parse(localStorage.getItem('membresiaActiva') || 'null');
     const foto = localStorage.getItem('fotoUsuario');
+    const fechaNacimiento = localStorage.getItem('fechaNacimiento');
+    const cumpleHoy = esCumpleHoy(fechaNacimiento);
+    const edad = calcularEdad(fechaNacimiento);
     const asistencias = JSON.parse(localStorage.getItem('asistenciasMes') || '[]');
 
     useEffect(() => {
@@ -96,6 +99,24 @@ export default function BienvenidaCliente({ onVolver }) {
                 <p className="text-lg font-semibold mb-6" style={{ color: '#4ade80' }}>
                     ✅ Asistencia registrada correctamente
                 </p>
+
+                {/* Cumpleaños */}
+                {cumpleHoy && (
+                    <div className="rounded-2xl p-5 mb-6"
+                         style={{
+                             background: 'linear-gradient(135deg, rgba(147,51,234,0.35), rgba(244,114,182,0.35))',
+                             border: '1px solid rgba(244,114,182,0.6)',
+                             boxShadow: '0 0 30px rgba(244,114,182,0.25)'
+                         }}>
+                        <p className="text-4xl mb-2">🎂🎉🎈</p>
+                        <p className="text-2xl font-bold text-white">¡Feliz cumpleaños!</p>
+                        <p className="text-base mt-1" style={{ color: '#fbcfe8' }}>
+                            {edad !== null && edad > 0
+                                ? `Hoy cumples ${edad} años. ¡Que tengas un día increíble!`
+                                : '¡Que tengas un día increíble!'}
+                        </p>
+                    </div>
+                )}
 
                 {/* Membresía */}
                 {membresia && (

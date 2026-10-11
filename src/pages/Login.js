@@ -14,7 +14,6 @@ export default function Login({ onLogin }) {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const API_BASE = `http://${window.location.hostname}:8080`;
-    //const API_BASE = 'http://localhost:8080';
 
     const handleLoginAdmin = async (e) => {
         e.preventDefault();
@@ -91,6 +90,7 @@ export default function Login({ onLogin }) {
             localStorage.setItem('membresiaActiva', JSON.stringify(membresiaData));
             localStorage.setItem('correo', usuarioEncontrado.correo);
             localStorage.setItem('fotoUsuario', usuarioEncontrado.foto || '');
+            localStorage.setItem('fechaNacimiento', usuarioEncontrado.fechaNacimiento || '');
             localStorage.setItem('asistenciasMes', JSON.stringify(asistencias));
 
             setMostrarBienvenida(true);
@@ -115,6 +115,7 @@ export default function Login({ onLogin }) {
         localStorage.removeItem('membresiaActiva');
         localStorage.removeItem('correo');
         localStorage.removeItem('asistenciasMes');
+        localStorage.removeItem('fechaNacimiento');
     };
 
     const inicial = (correo) => correo ? correo.charAt(0).toUpperCase() : '?';

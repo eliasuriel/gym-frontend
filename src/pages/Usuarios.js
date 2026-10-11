@@ -1,20 +1,20 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
+import { calcularEdad, esCumpleHoy, formatoFechaNacimiento } from '../utils/fechas';
 
 // Asegúrate de definir la URL base de tus archivos estáticos
 const API_BASE = `http://${window.location.hostname}:8080/api`;
-
-// Asegúrate de definir la URL base de tus archivos estáticos
-//const API_BASE = 'http://localhost:8080/api';
 
 export default function Usuarios() {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [form, setForm] = useState({ id: '', nombre: '', correo: '', password: '', telefono: '', rol: 'CLIENTE' });
+    const [form, setForm] = useState({ id: '', nombre: '', correo: '', password: '', telefono: '', fechaNacimiento: '', rol: 'CLIENTE' });
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [subiendoFoto, setSubiendoFoto] = useState(null);
+    const [editandoNac, setEditandoNac] = useState(null);   // id del usuario cuya fecha se está editando
+    const [nuevaFechaNac, setNuevaFechaNac] = useState('');
 
     const cargarUsuarios = () => {
         api.get('/usuarios')
@@ -29,14 +29,36 @@ export default function Usuarios() {
         e.preventDefault();
         setError('');
         try {
-            await api.post('/usuarios', { ...form, id: form.id ? Number(form.id) : null });
+            await api.post('/usuarios', {
+                ...form,
+                id: form.id ? Number(form.id) : null,
+                fechaNacimiento: form.fechaNacimiento || null
+            });
             setSuccess('Usuario creado correctamente');
-            setForm({ id: '', nombre: '', correo: '', password: '', telefono: '', rol: 'CLIENTE' });
+            setForm({ id: '', nombre: '', correo: '', password: '', telefono: '', fechaNacimiento: '', rol: 'CLIENTE' });
             setShowForm(false);
             cargarUsuarios();
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
             setError(err.response?.data?.mensaje || 'Error al crear usuario');
+        }
+    };
+
+    const handleGuardarFechaNac = async (usuarioId) => {
+        if (!nuevaFechaNac) {
+            setError('Selecciona una fecha de nacimiento');
+            return;
+        }
+        setError('');
+        try {
+            await api.put(`/usuarios/${usuarioId}/fecha-nacimiento`, { fechaNacimiento: nuevaFechaNac });
+            setSuccess('Fecha de nacimiento actualizada');
+            setEditandoNac(null);
+            setNuevaFechaNac('');
+            cargarUsuarios();
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.mensaje || 'Error al guardar la fecha de nacimiento');
         }
     };
 
@@ -150,6 +172,7 @@ export default function Usuarios() {
                             { label: 'Correo', key: 'correo', type: 'email', placeholder: 'correo@ejemplo.com' },
                             { label: 'Contraseña', key: 'password', type: 'password', placeholder: '••••••••' },
                             { label: 'Teléfono', key: 'telefono', type: 'text', placeholder: '3310000000' },
+                            { label: 'Fecha de nacimiento', key: 'fechaNacimiento', type: 'date', placeholder: '' },
                         ].map(({ label, key, type, placeholder }) => (
                             <div key={key}>
                                 <label className="text-sm block mb-1" style={{ color: '#9ca3af' }}>{label}</label>
@@ -160,7 +183,7 @@ export default function Usuarios() {
                                     placeholder={placeholder}
                                     className="w-full text-white px-4 py-2 rounded-xl focus:outline-none"
                                     style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(192,132,252,0.2)' }}
-                                    required={key !== 'telefono' && key !== 'id'}
+                                    required={key !== 'telefono' && key !== 'id' && key !== 'fechaNacimiento'}
                                 />
                             </div>
                         ))}
@@ -199,6 +222,7 @@ export default function Usuarios() {
                         <th className="text-left py-3">Nombre</th>
                         <th className="text-left py-3">Correo</th>
                         <th className="text-left py-3">Teléfono</th>
+                        <th className="text-left py-3">Nacimiento</th>
                         <th className="text-left py-3">Rol</th>
                         <th className="text-left py-3">Acciones</th>
                     </tr>
@@ -206,7 +230,7 @@ export default function Usuarios() {
                     <tbody>
                     {loading ? (
                         <tr>
-                            <td colSpan="7" className="py-8 text-center" style={{ color: '#9ca3af' }}>
+                            <td colSpan="8" className="py-8 text-center" style={{ color: '#9ca3af' }}>
                                 Cargando...
                             </td>
                         </tr>
@@ -248,6 +272,49 @@ export default function Usuarios() {
                             <td className="py-3 text-white font-medium">{u.nombre}</td>
                             <td className="py-3" style={{ color: '#9ca3af' }}>{u.correo}</td>
                             <td className="py-3" style={{ color: '#9ca3af' }}>{u.telefono || '—'}</td>
+                            <td className="py-3" style={{ color: '#9ca3af' }}>
+                                {editandoNac === u.id ? (
+                                    <div className="flex items-center gap-1">
+                                        <input
+                                            type="date"
+                                            value={nuevaFechaNac}
+                                            onChange={e => setNuevaFechaNac(e.target.value)}
+                                            className="text-white px-2 py-1 rounded-lg text-xs focus:outline-none"
+                                            style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(192,132,252,0.3)' }}
+                                        />
+                                        <button
+                                            onClick={() => handleGuardarFechaNac(u.id)}
+                                            className="text-xs px-2 py-1 rounded-lg"
+                                            style={{ background: 'rgba(74,222,128,0.15)', color: '#4ade80' }}
+                                        >
+                                            ✓
+                                        </button>
+                                        <button
+                                            onClick={() => { setEditandoNac(null); setNuevaFechaNac(''); }}
+                                            className="text-xs px-2 py-1 rounded-lg"
+                                            style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171' }}
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <span>
+                                            {u.fechaNacimiento
+                                                ? `${formatoFechaNacimiento(u.fechaNacimiento)} · ${calcularEdad(u.fechaNacimiento)} años`
+                                                : '—'}
+                                            {esCumpleHoy(u.fechaNacimiento) && ' 🎂'}
+                                        </span>
+                                        <button
+                                            onClick={() => { setEditandoNac(u.id); setNuevaFechaNac(u.fechaNacimiento || ''); }}
+                                            className="text-xs px-2 py-1 rounded-lg"
+                                            style={{ background: 'rgba(192,132,252,0.15)', color: '#c084fc' }}
+                                        >
+                                            ✎
+                                        </button>
+                                    </div>
+                                )}
+                            </td>
                             <td className="py-3">
                                 <span className="px-3 py-1 rounded-full text-xs font-semibold"
                                       style={u.rol?.toUpperCase() === 'ADMIN'
