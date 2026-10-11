@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import api from '../services/api';
 
 // Asegúrate de definir la URL base de tus archivos estáticos
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = `http://${window.location.hostname}:8080/api`;
+
+// Asegúrate de definir la URL base de tus archivos estáticos
+//const API_BASE = 'http://localhost:8080/api';
 
 export default function Usuarios() {
     const [usuarios, setUsuarios] = useState([]);

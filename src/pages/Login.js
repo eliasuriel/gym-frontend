@@ -13,7 +13,8 @@ export default function Login({ onLogin }) {
     const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const API_BASE = 'http://localhost:8080';
+    const API_BASE = `http://${window.location.hostname}:8080`;
+    //const API_BASE = 'http://localhost:8080';
 
     const handleLoginAdmin = async (e) => {
         e.preventDefault();

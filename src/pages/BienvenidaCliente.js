@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = `http://${window.location.hostname}:8080`;
+//const API_BASE = 'http://localhost:8080';
 
 export default function BienvenidaCliente({ onVolver }) {
     const [segundos, setSegundos] = useState(30);
