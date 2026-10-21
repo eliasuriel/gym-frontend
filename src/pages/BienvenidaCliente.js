@@ -6,6 +6,7 @@ const API_BASE = `http://${window.location.hostname}:8080`;
 export default function BienvenidaCliente({ onVolver }) {
     const [segundos, setSegundos] = useState(30);
     const correo = localStorage.getItem('correo');
+    const nombre = localStorage.getItem('nombre');
     const membresia = JSON.parse(localStorage.getItem('membresiaActiva') || 'null');
     const foto = localStorage.getItem('fotoUsuario');
     const fechaNacimiento = localStorage.getItem('fechaNacimiento');
@@ -95,7 +96,7 @@ export default function BienvenidaCliente({ onVolver }) {
                 )}
 
                 <h2 className="text-4xl font-bold text-white mb-2">¡Bienvenida!</h2>
-                <p className="text-xl mb-6" style={{ color: '#c084fc' }}>{correo}</p>
+                <p className="text-xl mb-6" style={{ color: '#c084fc' }}>{nombre || correo}</p>
                 <p className="text-lg font-semibold mb-6" style={{ color: '#4ade80' }}>
                     ✅ Asistencia registrada correctamente
                 </p>

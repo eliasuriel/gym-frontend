@@ -89,6 +89,7 @@ export default function Login({ onLogin }) {
             // store in local storage
             localStorage.setItem('membresiaActiva', JSON.stringify(membresiaData));
             localStorage.setItem('correo', usuarioEncontrado.correo);
+            localStorage.setItem('nombre', usuarioEncontrado.nombre || '');
             localStorage.setItem('fotoUsuario', usuarioEncontrado.foto || '');
             localStorage.setItem('fechaNacimiento', usuarioEncontrado.fechaNacimiento || '');
             localStorage.setItem('asistenciasMes', JSON.stringify(asistencias));
@@ -114,6 +115,7 @@ export default function Login({ onLogin }) {
         setError('');
         localStorage.removeItem('membresiaActiva');
         localStorage.removeItem('correo');
+        localStorage.removeItem('nombre');
         localStorage.removeItem('asistenciasMes');
         localStorage.removeItem('fechaNacimiento');
     };
@@ -286,7 +288,7 @@ export default function Login({ onLogin }) {
                                 {usuarioEncontrado.foto ? (
                                     <img
                                         src={`${API_BASE}/api/fotos/${usuarioEncontrado.foto}`}
-                                        alt={usuarioEncontrado.correo}
+                                        alt={usuarioEncontrado.nombre || usuarioEncontrado.correo}
                                         className="w-20 h-20 rounded-full object-cover flex-shrink-0"
                                         style={{ border: '3px solid rgba(192,132,252,0.6)' }}
                                     />
@@ -295,11 +297,11 @@ export default function Login({ onLogin }) {
                                         className="w-20 h-20 rounded-full flex items-center justify-center text-3xl font-black text-white flex-shrink-0"
                                         style={{ background: 'linear-gradient(135deg, #9333ea, #f472b6)' }}
                                     >
-                                        {inicial(usuarioEncontrado.correo)}
+                                        {inicial(usuarioEncontrado.nombre || usuarioEncontrado.correo)}
                                     </div>
                                 )}
                                 <div>
-                                    <p className="text-white font-bold text-lg">{usuarioEncontrado.correo}</p>
+                                    <p className="text-white font-bold text-lg">{usuarioEncontrado.nombre || usuarioEncontrado.correo}</p>
                                     <p className="text-gray-500 text-sm">ID: {usuarioEncontrado.id}</p>
                                 </div>
                             </div>
