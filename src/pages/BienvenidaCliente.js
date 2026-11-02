@@ -8,6 +8,8 @@ export default function BienvenidaCliente({ onVolver }) {
     const correo = localStorage.getItem('correo');
     const nombre = localStorage.getItem('nombre');
     const membresia = JSON.parse(localStorage.getItem('membresiaActiva') || 'null');
+    // ACTIVA, VENCIDA (tiene historial pero ya venció) o NINGUNA (nunca ha tenido membresía)
+    const estado = localStorage.getItem('membresiaEstado') || (membresia ? 'ACTIVA' : 'NINGUNA');
     const foto = localStorage.getItem('fotoUsuario');
     const fechaNacimiento = localStorage.getItem('fechaNacimiento');
     const cumpleHoy = esCumpleHoy(fechaNacimiento);
@@ -125,7 +127,7 @@ export default function BienvenidaCliente({ onVolver }) {
                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(192,132,252,0.2)' }}>
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-base font-medium" style={{ color: '#d1d5db' }}>Membresía</span>
-                            {dias > 0 ? (
+                            {estado === 'ACTIVA' ? (
                                 <span className="text-sm px-3 py-1 rounded-full font-semibold"
                                       style={{ background: '#16a34a', color: 'white' }}>Activa ✓</span>
                             ) : (
@@ -139,18 +141,18 @@ export default function BienvenidaCliente({ onVolver }) {
                                 <p className="text-white font-bold">{membresia.tipo}</p>
                             </div>
                             <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                <p className="text-xs mb-1" style={{ color: '#9ca3af' }}>Vence</p>
+                                <p className="text-xs mb-1" style={{ color: '#9ca3af' }}>{estado === 'VENCIDA' ? 'Venció' : 'Vence'}</p>
                                 <p className="text-white font-bold text-sm">{membresia.fechaVencimiento}</p>
                             </div>
                             <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
                                 <p className="text-xs mb-1" style={{ color: '#9ca3af' }}>Días</p>
                                 <p className="font-bold text-xl"
-                                   style={{ color: dias <= 7 && dias > 0 ? '#fb923c' : dias <= 0 ? '#ef4444' : '#a855f7' }}>
-                                    {dias}
+                                   style={{ color: estado === 'VENCIDA' ? '#ef4444' : dias <= 7 ? '#fb923c' : '#a855f7' }}>
+                                    {estado === 'VENCIDA' ? 0 : dias}
                                 </p>
                             </div>
                         </div>
-                        {dias <= 7 && dias > 0 && (
+                        {estado === 'ACTIVA' && dias <= 7 && dias > 0 && (
                             <div className="mt-3 px-3 py-2 rounded-xl"
                                  style={{ background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.3)' }}>
                                 <p style={{ color: '#fb923c' }} className="text-xs font-medium">
@@ -158,6 +160,28 @@ export default function BienvenidaCliente({ onVolver }) {
                                 </p>
                             </div>
                         )}
+                        {estado === 'VENCIDA' && (
+                            <div className="mt-3 px-3 py-2 rounded-xl"
+                                 style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.4)' }}>
+                                <p style={{ color: '#f87171' }} className="text-xs font-medium">
+                                    ⚠️ Tu asistencia quedó registrada, pero tu membresía está vencida — acércate a recepción para renovarla
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {estado === 'NINGUNA' && (
+                    <div className="rounded-2xl p-5 mb-6 text-left"
+                         style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(220,38,38,0.4)' }}>
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-base font-medium" style={{ color: '#d1d5db' }}>Membresía</span>
+                            <span className="text-sm px-3 py-1 rounded-full font-semibold"
+                                  style={{ background: '#dc2626', color: 'white' }}>Sin membresía ✗</span>
+                        </div>
+                        <p style={{ color: '#f87171' }} className="text-xs font-medium">
+                            ⚠️ Tu asistencia quedó registrada, pero no tienes una membresía — acércate a recepción
+                        </p>
                     </div>
                 )}
 

@@ -55,19 +55,28 @@ export default function Login({ onLogin }) {
             const id = usuarioEncontrado.id;
             const token = tokenTemporal;
 
-            // Verificar membresía activa
+            // Consultar la membresía: la activa o, si ya venció, la más reciente.
+            // La asistencia se registra en ambos casos; solo cambia lo que se muestra.
             let membresiaData = null;
+            let membresiaEstado = 'NINGUNA';
             try {
                 const membresiaRes = await api.get(`/membresias/usuario/${id}/activa`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 membresiaData = membresiaRes.data;
+                membresiaEstado = 'ACTIVA';
             } catch {
-                setError('Tu membresía está vencida. Contacta al administrador para renovarla.');
-                setUsuarioEncontrado(null);
-                setTokenTemporal(null);
-                setLoading(false);
-                return;
+                try {
+                    const historialRes = await api.get(`/membresias/usuario/${id}/historial`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const lista = historialRes.data || [];
+                    if (lista.length > 0) {
+                        membresiaData = [...lista].sort((a, b) =>
+                            (b.fechaVencimiento || '').localeCompare(a.fechaVencimiento || ''))[0];
+                        membresiaEstado = 'VENCIDA';
+                    }
+                } catch {}
             }
 
             // Registrar entrada
@@ -88,6 +97,7 @@ export default function Login({ onLogin }) {
 
             // store in local storage
             localStorage.setItem('membresiaActiva', JSON.stringify(membresiaData));
+            localStorage.setItem('membresiaEstado', membresiaEstado);
             localStorage.setItem('correo', usuarioEncontrado.correo);
             localStorage.setItem('nombre', usuarioEncontrado.nombre || '');
             localStorage.setItem('fotoUsuario', usuarioEncontrado.foto || '');
@@ -114,6 +124,7 @@ export default function Login({ onLogin }) {
         setUsuarioId('');
         setError('');
         localStorage.removeItem('membresiaActiva');
+        localStorage.removeItem('membresiaEstado');
         localStorage.removeItem('correo');
         localStorage.removeItem('nombre');
         localStorage.removeItem('asistenciasMes');
