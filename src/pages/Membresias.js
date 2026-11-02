@@ -8,6 +8,8 @@ export default function Membresias() {
     const [membresiaActiva, setMembresiaActiva] = useState(null);
     const [tipo, setTipo] = useState('MENSUAL');
     const [precio, setPrecio] = useState('');
+    const hoyISO = new Date().toLocaleDateString('en-CA');   // yyyy-MM-dd en hora local
+    const [fechaInicio, setFechaInicio] = useState(hoyISO);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
@@ -38,14 +40,39 @@ export default function Membresias() {
             setError('Escribe el precio cobrado (mayor a 0)');
             return;
         }
+        if (!fechaInicio) {
+            setError('Selecciona la fecha de inicio');
+            return;
+        }
         try {
-            await api.post(`/membresias/usuario/${usuarioSeleccionado}`, { tipo, precio: Number(precio) });
+            await api.post(`/membresias/usuario/${usuarioSeleccionado}`, {
+                tipo,
+                precio: Number(precio),
+                fechaPago: fechaInicio
+            });
             setPrecio('');
+            setFechaInicio(hoyISO);
             setSuccess('Membresía creada correctamente');
             cargarMembresias(usuarioSeleccionado);
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
             setError(err.response?.data?.mensaje || 'Error al crear membresía');
+        }
+    };
+
+    const handleEliminar = async (m) => {
+        const aviso = m.activa
+            ? '\nSi la clienta tiene una membresía anterior que sigue vigente, volverá a quedar activa.'
+            : '';
+        if (!window.confirm(`¿Eliminar la membresía ${m.tipo} que inició el ${m.fechaPago}?\nEsta acción no se puede deshacer.${aviso}`)) return;
+        setError('');
+        try {
+            await api.delete(`/membresias/${m.id}`);
+            setSuccess('Membresía eliminada');
+            cargarMembresias(usuarioSeleccionado);
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            setError(err.response?.data?.mensaje || 'Error al eliminar la membresía');
         }
     };
 
@@ -73,7 +100,7 @@ export default function Membresias() {
 
             <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                 <h3 className="text-xl font-semibold mb-4">Gestionar membresía</h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Seleccionar usuario</label>
                         <select
@@ -99,6 +126,16 @@ export default function Membresias() {
                             <option value="SEMESTRAL">Semestral</option>
                             <option value="ANUAL">Anual</option>
                         </select>
+                    </div>
+                    <div>
+                        <label className="text-gray-400 text-sm block mb-1">Fecha de inicio</label>
+                        <input
+                            type="date"
+                            max={hoyISO}
+                            value={fechaInicio}
+                            onChange={e => setFechaInicio(e.target.value)}
+                            className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
                     </div>
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Precio cobrado ($)</label>
@@ -137,7 +174,7 @@ export default function Membresias() {
                   </span>
                                 </div>
                                 <div>
-                                    <p className="text-gray-400 text-sm">Fecha de pago</p>
+                                    <p className="text-gray-400 text-sm">Fecha de inicio</p>
                                     <p className="text-white mt-1">{membresiaActiva.fechaPago}</p>
                                 </div>
                                 <div>
@@ -169,10 +206,11 @@ export default function Membresias() {
                                 <thead>
                                 <tr className="text-gray-400 border-b border-gray-700">
                                     <th className="text-left py-2">Tipo</th>
-                                    <th className="text-left py-2">Fecha pago</th>
+                                    <th className="text-left py-2">Inicio</th>
                                     <th className="text-left py-2">Vencimiento</th>
                                     <th className="text-left py-2">Precio</th>
                                     <th className="text-left py-2">Estado</th>
+                                    <th className="text-left py-2">Acciones</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -191,13 +229,21 @@ export default function Membresias() {
                           {m.activa ? 'Activa' : 'Vencida'}
                         </span>
                                         </td>
+                                        <td className="py-3">
+                                            <button
+                                                onClick={() => handleEliminar(m)}
+                                                className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-lg transition"
+                                            >
+                                                🗑 Eliminar
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                                 </tbody>
                                 <tfoot>
                                 <tr className="border-t border-gray-600">
                                     <td colSpan="3" className="py-3 text-gray-400 text-right pr-4">Total pagado</td>
-                                    <td colSpan="2" className="py-3 text-white font-bold">{formatoPrecio(totalPagado)}</td>
+                                    <td colSpan="3" className="py-3 text-white font-bold">{formatoPrecio(totalPagado)}</td>
                                 </tr>
                                 </tfoot>
                             </table>
