@@ -4,7 +4,7 @@ import { calcularEdad, esCumpleHoy } from '../utils/fechas';
 const API_BASE = `http://${window.location.hostname}:8080`;
 
 export default function BienvenidaCliente({ onVolver }) {
-    const [segundos, setSegundos] = useState(30);
+    const [segundos, setSegundos] = useState(10);
     const correo = localStorage.getItem('correo');
     const nombre = localStorage.getItem('nombre');
     const membresia = JSON.parse(localStorage.getItem('membresiaActiva') || 'null');
@@ -74,12 +74,17 @@ export default function BienvenidaCliente({ onVolver }) {
             <div className="w-full max-w-2xl rounded-3xl shadow-2xl p-10 text-center"
                  style={{ background: '#1a1a2e', border: '1px solid rgba(192, 132, 252, 0.2)' }}>
 
-                {/* Contador */}
-                <div className="flex justify-end mb-4">
-          <span className="text-sm px-4 py-2 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.05)', color: '#9ca3af' }}>
-            Volviendo en {segundos}s
-          </span>
+                {/* Regreso visible inmediatamente, sin necesidad de bajar al final */}
+                <div className="mb-7 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3"
+                     style={{ background: 'rgba(192,132,252,0.13)', border: '2px solid rgba(192,132,252,0.65)' }}>
+                    <div className="text-white text-lg font-bold" aria-live="polite">
+                        ⏱️ Regresando automáticamente en {segundos} segundos
+                    </div>
+                    <button type="button" onClick={onVolver}
+                            className="w-full sm:w-auto rounded-xl px-6 py-3 text-lg font-extrabold text-white shadow-lg transition hover:scale-105"
+                            style={{ background: 'linear-gradient(135deg, #9333ea, #db2777)' }}>
+                        ↩ Volver ahora
+                    </button>
                 </div>
 
                 {/* Foto o emoji */}
@@ -126,27 +131,27 @@ export default function BienvenidaCliente({ onVolver }) {
                     <div className="rounded-2xl p-5 mb-6 text-left"
                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(192,132,252,0.2)' }}>
                         <div className="flex items-center justify-between mb-4">
-                            <span className="text-base font-medium" style={{ color: '#d1d5db' }}>Membresía</span>
+                            <span className="text-xl font-bold" style={{ color: '#f3f4f6' }}>Membresía</span>
                             {estado === 'ACTIVA' ? (
-                                <span className="text-sm px-3 py-1 rounded-full font-semibold"
+                                <span className="text-base px-4 py-2 rounded-full font-bold"
                                       style={{ background: '#16a34a', color: 'white' }}>Activa ✓</span>
                             ) : (
-                                <span className="text-sm px-3 py-1 rounded-full font-semibold"
+                                <span className="text-base px-4 py-2 rounded-full font-bold"
                                       style={{ background: '#dc2626', color: 'white' }}>Vencida ✗</span>
                             )}
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                <p className="text-xs mb-1" style={{ color: '#9ca3af' }}>Tipo</p>
-                                <p className="text-white font-bold">{membresia.tipo}</p>
+                                <p className="text-base mb-1" style={{ color: '#d1d5db' }}>Tipo</p>
+                                <p className="text-white font-bold text-xl break-words">{membresia.tipo}</p>
                             </div>
                             <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                <p className="text-xs mb-1" style={{ color: '#9ca3af' }}>{estado === 'VENCIDA' ? 'Venció' : 'Vence'}</p>
-                                <p className="text-white font-bold text-sm">{membresia.fechaVencimiento}</p>
+                                <p className="text-base mb-1" style={{ color: '#d1d5db' }}>{estado === 'VENCIDA' ? 'Venció' : 'Vence'}</p>
+                                <p className="text-white font-bold text-lg break-words">{membresia.fechaVencimiento}</p>
                             </div>
                             <div className="rounded-xl p-3" style={{ background: 'rgba(255,255,255,0.05)' }}>
-                                <p className="text-xs mb-1" style={{ color: '#9ca3af' }}>Días</p>
-                                <p className="font-bold text-xl"
+                                <p className="text-base mb-1" style={{ color: '#d1d5db' }}>Días</p>
+                                <p className="font-bold text-3xl"
                                    style={{ color: estado === 'VENCIDA' ? '#ef4444' : dias <= 7 ? '#fb923c' : '#a855f7' }}>
                                     {estado === 'VENCIDA' ? 0 : dias}
                                 </p>
@@ -155,7 +160,7 @@ export default function BienvenidaCliente({ onVolver }) {
                         {estado === 'ACTIVA' && dias <= 7 && dias > 0 && (
                             <div className="mt-3 px-3 py-2 rounded-xl"
                                  style={{ background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.3)' }}>
-                                <p style={{ color: '#fb923c' }} className="text-xs font-medium">
+                                <p style={{ color: '#fb923c' }} className="text-base font-semibold">
                                     ⚠️ Tu membresía está por vencer — acércate a recepción para renovarla
                                 </p>
                             </div>
@@ -163,7 +168,7 @@ export default function BienvenidaCliente({ onVolver }) {
                         {estado === 'VENCIDA' && (
                             <div className="mt-3 px-3 py-2 rounded-xl"
                                  style={{ background: 'rgba(220,38,38,0.15)', border: '1px solid rgba(220,38,38,0.4)' }}>
-                                <p style={{ color: '#f87171' }} className="text-xs font-medium">
+                                <p style={{ color: '#f87171' }} className="text-base font-semibold">
                                     ⚠️ Tu asistencia quedó registrada, pero tu membresía está vencida — acércate a recepción para renovarla
                                 </p>
                             </div>
@@ -175,11 +180,11 @@ export default function BienvenidaCliente({ onVolver }) {
                     <div className="rounded-2xl p-5 mb-6 text-left"
                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(220,38,38,0.4)' }}>
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-base font-medium" style={{ color: '#d1d5db' }}>Membresía</span>
-                            <span className="text-sm px-3 py-1 rounded-full font-semibold"
+                            <span className="text-xl font-bold" style={{ color: '#f3f4f6' }}>Membresía</span>
+                            <span className="text-base px-4 py-2 rounded-full font-bold"
                                   style={{ background: '#dc2626', color: 'white' }}>Sin membresía ✗</span>
                         </div>
-                        <p style={{ color: '#f87171' }} className="text-xs font-medium">
+                        <p style={{ color: '#f87171' }} className="text-base font-semibold">
                             ⚠️ Tu asistencia quedó registrada, pero no tienes una membresía — acércate a recepción
                         </p>
                     </div>
@@ -268,21 +273,13 @@ export default function BienvenidaCliente({ onVolver }) {
                     <div
                         className="h-2 rounded-full transition-all duration-1000"
                         style={{
-                            width: `${(segundos / 30) * 100}%`,
+                            width: `${(segundos / 10) * 100}%`,
                             background: 'linear-gradient(90deg, #9333ea, #f472b6)'
                         }}
                     />
                 </div>
 
-                <button
-                    onClick={onVolver}
-                    className="text-base transition"
-                    style={{ color: '#6b7280' }}
-                    onMouseEnter={e => e.target.style.color = '#c084fc'}
-                    onMouseLeave={e => e.target.style.color = '#6b7280'}
-                >
-                    Volver ahora →
-                </button>
+
 
             </div>
         </div>
