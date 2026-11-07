@@ -5,8 +5,18 @@ import { calcularEdad, esCumpleHoy, formatoFechaNacimiento } from '../utils/fech
 // Asegúrate de definir la URL base de tus archivos estáticos
 const API_BASE = `http://${window.location.hostname}:8080/api`;
 
+const normalizarBusqueda = valor => String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const coincideCliente = (u, busqueda) => {
+    const termino = normalizarBusqueda(busqueda);
+    if (!termino) return true;
+    // Los números representan un ID completo, nunca coincidencias parciales.
+    if (/^\d+$/.test(termino)) return String(u.id) === String(Number(termino));
+    return [u.nombre, u.correo, u.telefono].some(valor => normalizarBusqueda(valor).includes(termino));
+};
+
 export default function Usuarios() {
     const [usuarios, setUsuarios] = useState([]);
+    const [busquedaCliente, setBusquedaCliente] = useState('');
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState({ id: '', nombre: '', correo: '', password: '', telefono: '', fechaNacimiento: '', rol: 'CLIENTE' });
@@ -214,6 +224,10 @@ export default function Usuarios() {
 
             <div className="rounded-2xl p-6"
                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(192,132,252,0.15)' }}>
+                <input type="search" aria-label="Buscar usuarios"
+                       placeholder="Buscar por ID, nombre, correo o teléfono..."
+                       value={busquedaCliente} onChange={e => setBusquedaCliente(e.target.value)}
+                       className="w-full md:w-96 bg-gray-700 text-white px-4 py-2 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500" />
                 <table className="w-full text-sm">
                     <thead>
                     <tr style={{ color: '#9ca3af', borderBottom: '1px solid rgba(192,132,252,0.15)' }}>
@@ -234,7 +248,7 @@ export default function Usuarios() {
                                 Cargando...
                             </td>
                         </tr>
-                    ) : usuarios.map(u => (
+                    ) : usuarios.filter(u => coincideCliente(u, busquedaCliente)).map(u => (
                         <tr key={u.id}
                             className="transition"
                             style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}

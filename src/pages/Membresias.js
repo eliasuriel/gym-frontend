@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 
+const normalizarBusqueda = valor => String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const coincideCliente = (u, busqueda) => {
+    const termino = normalizarBusqueda(busqueda);
+    if (!termino) return true;
+    // Los números representan un ID completo, nunca coincidencias parciales.
+    if (/^\d+$/.test(termino)) return String(u.id) === String(Number(termino));
+    return [u.nombre, u.correo, u.telefono].some(valor => normalizarBusqueda(valor).includes(termino));
+};
+
 export default function Membresias() {
     const [usuarios, setUsuarios] = useState([]);
+    const [busquedaCliente, setBusquedaCliente] = useState('');
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState('');
     const [historial, setHistorial] = useState([]);
     const [membresiaActiva, setMembresiaActiva] = useState(null);
@@ -128,14 +138,25 @@ export default function Membresias() {
                 <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Seleccionar usuario</label>
+                        <input type="search" aria-label="Buscar clienta para membresía"
+                               placeholder="ID o nombre..." value={busquedaCliente}
+                               onChange={e => setBusquedaCliente(e.target.value)}
+                               onKeyDown={e => {
+                                   if (e.key === 'Enter') {
+                                       e.preventDefault();
+                                       const coincidencias = usuarios.filter(u => u.rol === 'CLIENTE' && coincideCliente(u, busquedaCliente));
+                                       if (coincidencias.length === 1) cargarMembresias(String(coincidencias[0].id));
+                                   }
+                               }}
+                               className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-purple-500" />
                         <select
                             value={usuarioSeleccionado}
                             onChange={e => cargarMembresias(e.target.value)}
                             className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">-- Selecciona un usuario --</option>
-                            {usuarios.filter(u => u.rol === 'CLIENTE').map(u => (
-                                <option key={u.id} value={u.id}>{u.nombre}</option>
+                            {usuarios.filter(u => u.rol === 'CLIENTE' && (coincideCliente(u, busquedaCliente))).map(u => (
+                                <option key={u.id} value={u.id}>#{u.id} — {u.nombre}</option>
                             ))}
                         </select>
                     </div>

@@ -1,9 +1,19 @@
-
 import { useEffect, useState, useCallback, useRef } from 'react';
 import api from '../services/api';
 
+const normalizarBusqueda = valor => String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const coincideCliente = (u, busqueda) => {
+    const termino = normalizarBusqueda(busqueda);
+    if (!termino) return true;
+    // Los números representan un ID completo, nunca coincidencias parciales.
+    if (/^\d+$/.test(termino)) return String(u.id) === String(Number(termino));
+    return [u.nombre, u.correo, u.telefono].some(valor => normalizarBusqueda(valor).includes(termino));
+};
+
 export default function Asistencias() {
     const [usuarios, setUsuarios] = useState([]);
+    const [busquedaCliente, setBusquedaCliente] = useState('');
+    const [busquedaHistorial, setBusquedaHistorial] = useState('');
     const [asistenciasHoy, setAsistenciasHoy] = useState([]);
     const [fechaConsulta, setFechaConsulta] = useState(() => new Date().toLocaleDateString('en-CA'));
     const [errorConsulta, setErrorConsulta] = useState('');
@@ -13,8 +23,8 @@ export default function Asistencias() {
     const [loading, setLoading] = useState(false);
 
     // Registro manual (cuando una clienta olvidó registrar su asistencia)
-    const hoyISO = new Date().toLocaleDateString('en-CA');
-    const ahoraHHmm = new Date().toTimeString().slice(0, 5);
+    const hoyISO = new Date().toLocaleDateString('en-CA');           // yyyy-MM-dd en hora local
+    const ahoraHHmm = new Date().toTimeString().slice(0, 5);         // HH:mm en hora local
     const [manualUsuario, setManualUsuario] = useState('');
     const [manualFecha, setManualFecha] = useState(hoyISO);
     const [manualHora, setManualHora] = useState(ahoraHHmm);
@@ -79,7 +89,7 @@ export default function Asistencias() {
             const nombre = usuarios.find(u => String(u.id) === String(manualUsuario))?.nombre || '';
             setManualOk(`Asistencia registrada: ${nombre} · ${manualFecha}`);
             setFechaConsulta(manualFecha);
-            cargarAsistenciasHoy(manualFecha);
+            await cargarAsistenciasHoy(manualFecha);
             if (String(usuarioSeleccionado) === String(manualUsuario)) cargarHistorial(manualUsuario);
             setTimeout(() => setManualOk(''), 4000);
         } catch (err) {
@@ -96,7 +106,7 @@ export default function Asistencias() {
         try {
             await api.delete(`/asistencias/${asistencia.id}`);
             setManualOk('Asistencia eliminada');
-            cargarAsistenciasHoy();
+            await cargarAsistenciasHoy();
             if (usuarioSeleccionado) cargarHistorial(usuarioSeleccionado);
             setTimeout(() => setManualOk(''), 4000);
         } catch (err) {
@@ -122,13 +132,24 @@ export default function Asistencias() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Clienta</label>
+                        <input type="search" aria-label="Buscar clienta para asistencia manual"
+                               placeholder="Buscar por ID o nombre..." value={busquedaCliente}
+                               onChange={e => setBusquedaCliente(e.target.value)}
+                               onKeyDown={e => {
+                                   if (e.key === 'Enter') {
+                                       e.preventDefault();
+                                       const coincidencias = usuarios.filter(u => u.rol === 'CLIENTE' && coincideCliente(u, busquedaCliente));
+                                       if (coincidencias.length === 1) setManualUsuario(String(coincidencias[0].id));
+                                   }
+                               }}
+                               className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg mb-2" />
                         <select
                             value={manualUsuario}
                             onChange={e => setManualUsuario(e.target.value)}
                             className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">-- Selecciona --</option>
-                            {usuarios.filter(u => u.rol === 'CLIENTE').map(u => (
+                            {usuarios.filter(u => u.rol === 'CLIENTE' && (coincideCliente(u, busquedaCliente))).map(u => (
                                 <option key={u.id} value={u.id}>{u.id} · {u.nombre}</option>
                             ))}
                         </select>
@@ -196,7 +217,7 @@ export default function Asistencias() {
                                className="bg-gray-700 text-white px-3 py-1 rounded-lg" />
                         <button onClick={() => setFechaConsulta(hoyISO)} className="bg-purple-700 hover:bg-purple-600 px-3 py-1 rounded-lg text-sm">Hoy</button>
                         <button
-                            onClick={() => cargarAsistenciasHoy()}
+                            onClick={cargarAsistenciasHoy}
                             className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded-lg transition"
                         >
                             🔄 Actualizar
@@ -224,9 +245,9 @@ export default function Asistencias() {
                                 <td className="py-3 text-gray-400">{a.fechaEntrada}</td>
                                 <td className="py-3 text-gray-400">{a.fechaSalida || '—'}</td>
                                 <td className="py-3">
-                                    <span className={`text-xs px-2 py-1 rounded-full ${a.fechaSalida ? 'bg-gray-600' : 'bg-green-600'}`}>
-                                        {a.fechaSalida ? 'Completada' : 'En gimnasio'}
-                                    </span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${a.fechaSalida ? 'bg-gray-600' : 'bg-green-600'}`}>
+                      {a.fechaSalida ? 'Completada' : 'En gimnasio'}
+                    </span>
                                 </td>
                                 <td className="py-3">
                                     <button
@@ -246,13 +267,24 @@ export default function Asistencias() {
             {/* Historial por usuario */}
             <div className="bg-gray-800 rounded-2xl p-6">
                 <h3 className="text-xl font-semibold mb-4">Historial por usuario</h3>
+                <input type="search" aria-label="Buscar historial por ID o nombre"
+                       placeholder="Buscar clienta por ID o nombre..." value={busquedaHistorial}
+                       onChange={e => setBusquedaHistorial(e.target.value)}
+                       onKeyDown={e => {
+                           if (e.key === 'Enter') {
+                               e.preventDefault();
+                               const coincidencias = usuarios.filter(u => u.rol === 'CLIENTE' && coincideCliente(u, busquedaHistorial));
+                               if (coincidencias.length === 1) cargarHistorial(String(coincidencias[0].id));
+                           }
+                       }}
+                       className="bg-gray-700 text-white px-4 py-2 rounded-lg mb-3 mr-2" />
                 <select
                     value={usuarioSeleccionado}
                     onChange={e => cargarHistorial(e.target.value)}
                     className="bg-gray-700 text-white px-4 py-2 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     <option value="">-- Selecciona un usuario --</option>
-                    {usuarios.filter(u => u.rol === 'CLIENTE').map(u => (
+                    {usuarios.filter(u => u.rol === 'CLIENTE' && (coincideCliente(u, busquedaCliente))).map(u => (
                         <option key={u.id} value={u.id}>{u.nombre}</option>
                     ))}
                 </select>
@@ -278,9 +310,9 @@ export default function Asistencias() {
                                     <td className="py-3 text-gray-400">{a.fechaEntrada}</td>
                                     <td className="py-3 text-gray-400">{a.fechaSalida || '—'}</td>
                                     <td className="py-3">
-                                        <span className={`text-xs px-2 py-1 rounded-full ${a.fechaSalida ? 'bg-gray-600' : 'bg-green-600'}`}>
-                                            {a.fechaSalida ? 'Completada' : 'En gimnasio'}
-                                        </span>
+                      <span className={`text-xs px-2 py-1 rounded-full ${a.fechaSalida ? 'bg-gray-600' : 'bg-green-600'}`}>
+                        {a.fechaSalida ? 'Completada' : 'En gimnasio'}
+                      </span>
                                     </td>
                                     <td className="py-3">
                                         <button

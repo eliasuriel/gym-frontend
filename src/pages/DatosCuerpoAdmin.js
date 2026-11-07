@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 import api from '../services/api';
 
+const normalizarBusqueda = valor => String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+const coincideCliente = (u, busqueda) => {
+    const termino = normalizarBusqueda(busqueda);
+    if (!termino) return true;
+    // Los números representan un ID completo, nunca coincidencias parciales.
+    if (/^\d+$/.test(termino)) return String(u.id) === String(Number(termino));
+    return [u.nombre, u.correo, u.telefono].some(valor => normalizarBusqueda(valor).includes(termino));
+};
+
 export default function DatosCuerpoAdmin() {
     const [usuarios, setUsuarios] = useState([]);
+    const [busquedaCliente, setBusquedaCliente] = useState('');
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState('');
     const [historial, setHistorial] = useState([]);
     const [ultimo, setUltimo] = useState(null);
@@ -126,13 +136,27 @@ export default function DatosCuerpoAdmin() {
                 <div className="flex items-center gap-4 flex-wrap">
                     <div className="flex-1">
                         <label className="text-gray-400 text-sm block mb-1">Seleccionar cliente</label>
+                        <input type="search" aria-label="Buscar clienta por ID o nombre"
+                               placeholder="ID exacto o nombre..." value={busquedaCliente}
+                               onChange={e => setBusquedaCliente(e.target.value)}
+                               onKeyDown={e => {
+                                   if (e.key === 'Enter') {
+                                       e.preventDefault();
+                                       const coincidencias = usuarios.filter(u => coincideCliente(u, busquedaCliente));
+                                       if (coincidencias.length === 1) {
+                                           cargarDatos(String(coincidencias[0].id));
+                                           setMostrarFormulario(false);
+                                       }
+                                   }
+                               }}
+                               className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-purple-500" />
                         <select
                             value={usuarioSeleccionado}
                             onChange={e => { cargarDatos(e.target.value); setMostrarFormulario(false); }}
                             className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">-- Selecciona un cliente --</option>
-                            {usuarios.map(u => (
+                            {usuarios.filter(u => coincideCliente(u, busquedaCliente)).map(u => (
                                 <option key={u.id} value={u.id}>{u.nombre} — {u.correo}</option>
                             ))}
                         </select>
