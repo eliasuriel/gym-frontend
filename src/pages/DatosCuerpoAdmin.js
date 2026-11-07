@@ -11,6 +11,8 @@ export default function DatosCuerpoAdmin() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const hoyISO = () => new Date().toLocaleDateString('en-CA');
+    const [fechaRegistro, setFechaRegistro] = useState(hoyISO);
     const [form, setForm] = useState({
         peso: '', altura: '',
         musculo: '', grasaCorporal: '', grasaVisceral: '', edadMetabolica: '',
@@ -38,9 +40,14 @@ export default function DatosCuerpoAdmin() {
     const handleGuardar = async (e) => {
         e.preventDefault();
         setError('');
+        if (!fechaRegistro || fechaRegistro > hoyISO()) {
+            setError('Selecciona una fecha válida, igual o anterior a hoy');
+            return;
+        }
         setLoading(true);
         try {
             await api.post(`/datos-cuerpo/admin/usuario/${usuarioSeleccionado}`, {
+                fechaRegistro,
                 peso: form.peso ? parseFloat(form.peso) : null,
                 altura: form.altura ? parseFloat(form.altura) : null,
                 musculo: form.musculo ? parseFloat(form.musculo) : null,
@@ -60,6 +67,7 @@ export default function DatosCuerpoAdmin() {
                 musculo: '', grasaCorporal: '', grasaVisceral: '', edadMetabolica: '',
                 busto: '', cintura: '', abdomen: '', cadera: '', muslo: '', brazo: ''
             });
+            setFechaRegistro(hoyISO());
             setMostrarFormulario(false);
             cargarDatos(usuarioSeleccionado);
             setTimeout(() => setSuccess(''), 3000);
@@ -147,6 +155,13 @@ export default function DatosCuerpoAdmin() {
                 <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                     <h3 className="text-xl font-semibold mb-6">Nuevo registro</h3>
                     <form onSubmit={handleGuardar}>
+                        <div className="mb-6 max-w-sm">
+                            <label htmlFor="fecha-medicion" className="text-gray-300 text-sm block mb-2">Fecha de la medición</label>
+                            <input id="fecha-medicion" type="date" required max={hoyISO()} value={fechaRegistro}
+                                   onChange={e => setFechaRegistro(e.target.value)}
+                                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg" />
+                            <p className="text-gray-400 text-xs mt-1">Puedes registrar mediciones anteriores, pero no futuras.</p>
+                        </div>
                         <p className="text-blue-400 font-medium mb-3">📊 Composición corporal</p>
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
                             {campo('Peso', 'peso', '75.5', 'kg')}

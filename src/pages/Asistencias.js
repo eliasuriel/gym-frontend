@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react';
+
+import { useEffect, useState, useCallback, useRef } from 'react';
 import api from '../services/api';
 
 export default function Asistencias() {
     const [usuarios, setUsuarios] = useState([]);
     const [asistenciasHoy, setAsistenciasHoy] = useState([]);
+    const [fechaConsulta, setFechaConsulta] = useState(() => new Date().toLocaleDateString('en-CA'));
+    const [errorConsulta, setErrorConsulta] = useState('');
+    const solicitudActual = useRef(0);
     const [historial, setHistorial] = useState([]);
     const [usuarioSeleccionado, setUsuarioSeleccionado] = useState('');
     const [loading, setLoading] = useState(false);
 
     // Registro manual (cuando una clienta olvidó registrar su asistencia)
-    const hoyISO = new Date().toLocaleDateString('en-CA');           // yyyy-MM-dd en hora local
-    const ahoraHHmm = new Date().toTimeString().slice(0, 5);         // HH:mm en hora local
+    const hoyISO = new Date().toLocaleDateString('en-CA');
+    const ahoraHHmm = new Date().toTimeString().slice(0, 5);
     const [manualUsuario, setManualUsuario] = useState('');
     const [manualFecha, setManualFecha] = useState(hoyISO);
     const [manualHora, setManualHora] = useState(ahoraHHmm);
@@ -20,14 +24,26 @@ export default function Asistencias() {
 
     useEffect(() => {
         api.get('/usuarios').then(res => setUsuarios(res.data));
-        cargarAsistenciasHoy();
+        // La consulta se realiza al cambiar la fecha.
     }, []);
 
-    const cargarAsistenciasHoy = () => {
-        api.get('/asistencias/hoy')
-            .then(res => setAsistenciasHoy(res.data))
-            .catch(() => {});
-    };
+    const cargarAsistenciasHoy = useCallback(async (fecha = fechaConsulta) => {
+        if (!fecha || fecha > hoyISO) return;
+        const solicitud = ++solicitudActual.current;
+        setErrorConsulta('');
+        try {
+            const res = await api.get('/asistencias/fecha', {
+                params: { fecha }
+            });
+            if (solicitud === solicitudActual.current) setAsistenciasHoy(res.data);
+        } catch (error) {
+            if (solicitud === solicitudActual.current) setErrorConsulta('No se pudieron cargar las asistencias de esa fecha.');
+        }
+    }, [fechaConsulta, hoyISO]);
+
+    useEffect(() => {
+        cargarAsistenciasHoy();
+    }, [cargarAsistenciasHoy]);
 
     const cargarHistorial = (usuarioId) => {
         setUsuarioSeleccionado(usuarioId);
@@ -49,6 +65,10 @@ export default function Asistencias() {
             setManualError('Selecciona la fecha');
             return;
         }
+        if (manualFecha > hoyISO || (manualFecha === hoyISO && manualHora > new Date().toTimeString().slice(0, 5))) {
+            setManualError('No puedes registrar una asistencia futura');
+            return;
+        }
         setGuardandoManual(true);
         try {
             await api.post('/asistencias/manual', {
@@ -58,7 +78,8 @@ export default function Asistencias() {
             });
             const nombre = usuarios.find(u => String(u.id) === String(manualUsuario))?.nombre || '';
             setManualOk(`Asistencia registrada: ${nombre} · ${manualFecha}`);
-            cargarAsistenciasHoy();
+            setFechaConsulta(manualFecha);
+            cargarAsistenciasHoy(manualFecha);
             if (String(usuarioSeleccionado) === String(manualUsuario)) cargarHistorial(manualUsuario);
             setTimeout(() => setManualOk(''), 4000);
         } catch (err) {
@@ -84,6 +105,7 @@ export default function Asistencias() {
     };
 
     const clientesSinSalida = asistenciasHoy.filter(a => !a.fechaSalida);
+    const esHoy = fechaConsulta === hoyISO;
 
     return (
         <div>
@@ -145,7 +167,7 @@ export default function Asistencias() {
             {/* Resumen del día */}
             <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold">Resumen de hoy</h3>
+                    <h3 className="text-xl font-semibold">Resumen del {fechaConsulta === hoyISO ? 'día de hoy' : fechaConsulta}</h3>
                     <div className="flex gap-6">
                         <div className="text-center">
                             <p className="text-2xl font-bold text-blue-400">{asistenciasHoy.length}</p>
@@ -153,7 +175,7 @@ export default function Asistencias() {
                         </div>
                         <div className="text-center">
                             <p className="text-2xl font-bold text-green-400">{clientesSinSalida.length}</p>
-                            <p className="text-gray-400 text-xs">En gimnasio ahora</p>
+                            <p className="text-gray-400 text-xs">{esHoy ? 'En gimnasio ahora' : 'Sin salida registrada'}</p>
                         </div>
                         <div className="text-center">
                             <p className="text-2xl font-bold text-gray-400">{asistenciasHoy.length - clientesSinSalida.length}</p>
@@ -166,16 +188,24 @@ export default function Asistencias() {
             {/* Asistencias de hoy */}
             <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-semibold">Asistencias de hoy</h3>
-                    <button
-                        onClick={cargarAsistenciasHoy}
-                        className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded-lg transition"
-                    >
-                        🔄 Actualizar
-                    </button>
+                    <h3 className="text-xl font-semibold">Asistencias del {fechaConsulta}</h3>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <label htmlFor="fecha-asistencias" className="text-gray-300 text-sm">Consultar fecha</label>
+                        <input id="fecha-asistencias" type="date" max={hoyISO} value={fechaConsulta}
+                               onChange={e => setFechaConsulta(e.target.value)}
+                               className="bg-gray-700 text-white px-3 py-1 rounded-lg" />
+                        <button onClick={() => setFechaConsulta(hoyISO)} className="bg-purple-700 hover:bg-purple-600 px-3 py-1 rounded-lg text-sm">Hoy</button>
+                        <button
+                            onClick={() => cargarAsistenciasHoy()}
+                            className="bg-gray-700 hover:bg-gray-600 text-white text-xs px-3 py-1 rounded-lg transition"
+                        >
+                            🔄 Actualizar
+                        </button>
+                    </div>
                 </div>
+                {errorConsulta && <p className="text-red-400 mb-3">{errorConsulta}</p>}
                 {asistenciasHoy.length === 0 ? (
-                    <p className="text-gray-400">No hay asistencias registradas hoy.</p>
+                    <p className="text-gray-400">No hay asistencias registradas en la fecha seleccionada.</p>
                 ) : (
                     <table className="w-full text-sm">
                         <thead>
@@ -194,9 +224,9 @@ export default function Asistencias() {
                                 <td className="py-3 text-gray-400">{a.fechaEntrada}</td>
                                 <td className="py-3 text-gray-400">{a.fechaSalida || '—'}</td>
                                 <td className="py-3">
-                    <span className={`text-xs px-2 py-1 rounded-full ${a.fechaSalida ? 'bg-gray-600' : 'bg-green-600'}`}>
-                      {a.fechaSalida ? 'Completada' : 'En gimnasio'}
-                    </span>
+                                    <span className={`text-xs px-2 py-1 rounded-full ${a.fechaSalida ? 'bg-gray-600' : 'bg-green-600'}`}>
+                                        {a.fechaSalida ? 'Completada' : 'En gimnasio'}
+                                    </span>
                                 </td>
                                 <td className="py-3">
                                     <button
@@ -248,9 +278,9 @@ export default function Asistencias() {
                                     <td className="py-3 text-gray-400">{a.fechaEntrada}</td>
                                     <td className="py-3 text-gray-400">{a.fechaSalida || '—'}</td>
                                     <td className="py-3">
-                      <span className={`text-xs px-2 py-1 rounded-full ${a.fechaSalida ? 'bg-gray-600' : 'bg-green-600'}`}>
-                        {a.fechaSalida ? 'Completada' : 'En gimnasio'}
-                      </span>
+                                        <span className={`text-xs px-2 py-1 rounded-full ${a.fechaSalida ? 'bg-gray-600' : 'bg-green-600'}`}>
+                                            {a.fechaSalida ? 'Completada' : 'En gimnasio'}
+                                        </span>
                                     </td>
                                     <td className="py-3">
                                         <button

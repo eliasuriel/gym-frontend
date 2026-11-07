@@ -10,6 +10,9 @@ export default function Membresias() {
     const [precio, setPrecio] = useState('');
     const hoyISO = new Date().toLocaleDateString('en-CA');   // yyyy-MM-dd en hora local
     const [fechaInicio, setFechaInicio] = useState(hoyISO);
+    const [fechaVencimiento, setFechaVencimiento] = useState('');
+    const [editando, setEditando] = useState(null);
+    const [fechaEdicion, setFechaEdicion] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
@@ -40,6 +43,10 @@ export default function Membresias() {
             setError('Escribe el precio cobrado (mayor a 0)');
             return;
         }
+        if (fechaVencimiento && fechaVencimiento <= fechaInicio) {
+            setError('El vencimiento debe ser posterior a la fecha de pago');
+            return;
+        }
         if (!fechaInicio) {
             setError('Selecciona la fecha de inicio');
             return;
@@ -48,15 +55,33 @@ export default function Membresias() {
             await api.post(`/membresias/usuario/${usuarioSeleccionado}`, {
                 tipo,
                 precio: Number(precio),
-                fechaPago: fechaInicio
+                fechaPago: fechaInicio,
+                ...(fechaVencimiento ? { fechaVencimiento } : {})
             });
             setPrecio('');
             setFechaInicio(hoyISO);
+            setFechaVencimiento('');
             setSuccess('Membresía creada correctamente');
             cargarMembresias(usuarioSeleccionado);
             setTimeout(() => setSuccess(''), 3000);
         } catch (err) {
             setError(err.response?.data?.mensaje || 'Error al crear membresía');
+        }
+    };
+
+    const guardarVencimiento = async (m) => {
+        setError('');
+        if (!fechaEdicion || fechaEdicion <= m.fechaPago) {
+            setError('Selecciona un vencimiento posterior a la fecha de pago');
+            return;
+        }
+        try {
+            await api.patch(`/membresias/${m.id}/vencimiento`, { fechaVencimiento: fechaEdicion });
+            setEditando(null);
+            setSuccess('Vencimiento actualizado correctamente');
+            await cargarMembresias(usuarioSeleccionado);
+        } catch (err) {
+            setError(err.response?.data?.mensaje || 'No se pudo actualizar el vencimiento');
         }
     };
 
@@ -100,7 +125,7 @@ export default function Membresias() {
 
             <div className="bg-gray-800 rounded-2xl p-6 mb-6">
                 <h3 className="text-xl font-semibold mb-4">Gestionar membresía</h3>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Seleccionar usuario</label>
                         <select
@@ -136,6 +161,13 @@ export default function Membresias() {
                             onChange={e => setFechaInicio(e.target.value)}
                             className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                    </div>
+                    <div>
+                        <label className="text-gray-400 text-sm block mb-1">Vencimiento personalizado (opcional)</label>
+                        <input type="date" min={fechaInicio || undefined} value={fechaVencimiento}
+                               onChange={e => setFechaVencimiento(e.target.value)}
+                               className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg" />
+                        <p className="text-gray-400 text-xs mt-1">Vacío = cálculo automático (incluye tolerancia de 7 días)</p>
                     </div>
                     <div>
                         <label className="text-gray-400 text-sm block mb-1">Precio cobrado ($)</label>
@@ -222,7 +254,13 @@ export default function Membresias() {
                         </span>
                                         </td>
                                         <td className="py-3 text-gray-400">{m.fechaPago}</td>
-                                        <td className="py-3 text-gray-400">{m.fechaVencimiento}</td>
+                                        <td className="py-3 text-gray-400">
+                                            {editando === m.id ? (
+                                                <input type="date" value={fechaEdicion}
+                                                       min={m.fechaPago} onChange={e => setFechaEdicion(e.target.value)}
+                                                       className="bg-gray-700 text-white px-2 py-1 rounded" />
+                                            ) : m.fechaVencimiento}
+                                        </td>
                                         <td className="py-3 text-white">{formatoPrecio(m.precio)}</td>
                                         <td className="py-3">
                         <span className={`text-xs px-2 py-1 rounded-full ${m.activa ? 'bg-green-600' : 'bg-gray-600'}`}>
@@ -230,6 +268,17 @@ export default function Membresias() {
                         </span>
                                         </td>
                                         <td className="py-3">
+                                            {editando === m.id ? (
+                                                <>
+                                                    <button onClick={() => guardarVencimiento(m)}
+                                                            className="bg-green-600 text-white text-xs px-3 py-1 rounded-lg mr-2">Guardar</button>
+                                                    <button onClick={() => setEditando(null)}
+                                                            className="bg-gray-600 text-white text-xs px-3 py-1 rounded-lg mr-2">Cancelar</button>
+                                                </>
+                                            ) : (
+                                                <button onClick={() => { setEditando(m.id); setFechaEdicion(m.fechaVencimiento); }}
+                                                        className="bg-purple-600 text-white text-xs px-3 py-1 rounded-lg mr-2">Editar vencimiento</button>
+                                            )}
                                             <button
                                                 onClick={() => handleEliminar(m)}
                                                 className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded-lg transition"

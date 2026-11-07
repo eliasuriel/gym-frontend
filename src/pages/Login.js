@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import api from '../services/api';
 import BienvenidaCliente from './BienvenidaCliente';
 import logo from '../assets/logo.png';
@@ -13,6 +13,7 @@ export default function Login({ onLogin }) {
     const [mostrarBienvenida, setMostrarBienvenida] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const confirmandoRef = useRef(false);
     const API_BASE = `http://${window.location.hostname}:8080`;
 
     const handleLoginAdmin = async (e) => {
@@ -49,6 +50,8 @@ export default function Login({ onLogin }) {
     };
 
     const handleConfirmar = async () => {
+        if (confirmandoRef.current || loading || !usuarioEncontrado) return;
+        confirmandoRef.current = true;
         setLoading(true);
         setError('');
         try {
@@ -105,10 +108,27 @@ export default function Login({ onLogin }) {
             localStorage.setItem('asistenciasMes', JSON.stringify(asistencias));
 
             setMostrarBienvenida(true);
+        } catch {
+            setError('No se pudo completar el registro. Intenta nuevamente.');
         } finally {
+            confirmandoRef.current = false;
             setLoading(false);
         }
     };
+
+    // Enter funciona aunque el botón no tenga el foco. El bloqueo de handleConfirmar
+    // evita peticiones duplicadas al mantener la tecla presionada.
+    useEffect(() => {
+        if (!usuarioEncontrado || mostrarBienvenida) return;
+        const confirmarConEnter = (event) => {
+            if (event.key !== 'Enter' || event.repeat || event.isComposing) return;
+            if (event.target?.tagName === 'TEXTAREA') return;
+            event.preventDefault();
+            handleConfirmar();
+        };
+        window.addEventListener('keydown', confirmarConEnter);
+        return () => window.removeEventListener('keydown', confirmarConEnter);
+    });
 
     const handleNoSoyYo = () => {
         setUsuarioEncontrado(null);
@@ -317,9 +337,9 @@ export default function Login({ onLogin }) {
                                 </div>
                             </div>
 
-                            <div className="space-y-3">
+                            <form onSubmit={(e) => { e.preventDefault(); handleConfirmar(); }} className="space-y-3">
                                 <button
-                                    onClick={handleConfirmar}
+                                    type="submit"
                                     disabled={loading}
                                     className="w-full text-white font-bold py-4 rounded-2xl transition text-lg disabled:opacity-50"
                                     style={{
@@ -330,6 +350,7 @@ export default function Login({ onLogin }) {
                                     {loading ? 'Registrando entrada...' : '✅ Sí, soy yo — Entrar'}
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={handleNoSoyYo}
                                     className="w-full py-4 rounded-2xl transition font-medium"
                                     style={{
@@ -340,7 +361,8 @@ export default function Login({ onLogin }) {
                                 >
                                     ❌ No, no soy yo
                                 </button>
-                            </div>
+                                <p className="text-center text-sm text-purple-300">Presiona Enter para confirmar tu entrada</p>
+                            </form>
                         </div>
                     )}
 
